@@ -28,6 +28,9 @@ jobs:
             bash -lc '
               set -euo pipefail
 
+              dnf install -y dnf-plugins-core epel-release
+              dnf config-manager --set-enabled powertools
+
               dnf install -y \
                 ca-certificates \
                 python39 \
@@ -53,7 +56,9 @@ jobs:
                 libxcb \
                 libxkbcommon \
                 libxkbcommon-x11 \
-                wayland-libs \
+                libwayland-client \
+                libwayland-cursor \
+                libwayland-egl \
                 xcb-util \
                 xcb-util-cursor \
                 xcb-util-image \
