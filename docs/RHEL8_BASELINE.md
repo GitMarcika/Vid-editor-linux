@@ -19,11 +19,16 @@ The bootstrap does **not** install Python system-wide and never attempts sudo. I
 
 PySide6 is installed only into the repository-local `.venv`.
 
-The GUI requires an existing graphical desktop session. X11 vs Wayland matters primarily for screen recording and is intentionally deferred until step 4.
+The GUI requires an existing graphical desktop session. The current Qt imports require desktop libraries including `libEGL.so.1`; multimedia imports also require `libpulse.so.0`. A normal graphical RHEL8 workstation will often already provide these, but we verify rather than assume.
+
+`preflight.sh` checks the system read-only, including Python, glibc, display/session variables and key shared libraries. It never invokes sudo.
+
+X11 vs Wayland matters primarily for screen recording and is intentionally deferred until step 4.
 
 Useful read-only checks on the real workstation:
 
 ```bash
+./preflight.sh
 cat /etc/redhat-release
 uname -m
 python3 --version
