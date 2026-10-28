@@ -21,16 +21,17 @@ be9312f813741e23beae2788adc085592cff0aaa
 Current development branch:
 
 ```text
-port/rhel8-step1
+port/rhel8-step2
 ```
 
-## Step 1 status
+## Step 1 + Step 2 status
 
-The shared application/editor core is present. Windows recording code is deliberately excluded and the Screen Recorder tab uses a Linux placeholder until the Linux capture backend is implemented.
+The shared application/editor core is present. Raw Cutter now has user-space FFmpeg/FFprobe provisioning and Linux-safe export hardening. Windows recording code remains deliberately excluded and the Screen Recorder tab uses a Linux placeholder until Step 4.
 
 On a RHEL8-class graphical workstation that already has Python 3.9-3.11:
 
 ```bash
+./preflight.sh
 ./install.sh
 ./run.sh
 ```
@@ -44,3 +45,18 @@ See:
 - `docs/PORT_PLAN.md`
 - `docs/RHEL8_BASELINE.md`
 - `docs/PROJECT_FORMAT.md`
+
+
+## FFmpeg setup
+
+`./install.sh` automatically prepares an application-local FFmpeg runtime under `tools/ffmpeg/`.
+
+For offline/restricted networks:
+
+```bash
+VIDEDITOR_FFMPEG_ARCHIVE=/path/to/ffmpeg.tar.xz ./setup_ffmpeg.sh
+```
+
+The default online source is the BtbN GPL static Linux x86_64 FFmpeg 8.1 release branch, which targets RHEL/CentOS 8 and newer.
+
+See `docs/RAW_CUTTER_RHEL8.md` for the Step 2 acceptance checklist.
