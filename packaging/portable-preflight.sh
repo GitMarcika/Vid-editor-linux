@@ -58,11 +58,11 @@ if command -v ldd >/dev/null 2>&1; then
     )
 
     if [[ "${XDG_SESSION_TYPE:-}" == "wayland" || -n "${WAYLAND_DISPLAY:-}" ]]; then
-        platform_plugin="$(find ./_internal -type f \
+        platform_plugin="$(find . -type f \
             \( -name 'libqwayland-generic.so' -o -name 'libqwayland-egl.so' \) \
             2>/dev/null | head -n1)"
     else
-        platform_plugin="$(find ./_internal -type f -name 'libqxcb.so' \
+        platform_plugin="$(find . -type f -name 'libqxcb.so' \
             2>/dev/null | head -n1)"
     fi
 
