@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 
 from src.gui.widgets.capture_frame import CaptureFrame
 from src.gui.widgets.path_picker import DirectoryPicker
+from src.gui.widgets.wayland_capture_overlay import WaylandCaptureOverlay
 from src.services.ffmpeg_export import find_ffmpeg
 from src.services.linux_screen_capture import (
     GnomeWaylandRecordingJob,
@@ -59,7 +60,12 @@ class RecorderTab(QWidget):
         self._start_delay.setInterval(300)
         self._start_delay.timeout.connect(self._launch_pending_recording)
 
-        self.capture_frame = CaptureFrame(self)
+        initial_session = detect_linux_session()
+        if initial_session.is_wayland:
+            self.capture_frame = WaylandCaptureOverlay(self)
+        else:
+            self.capture_frame = CaptureFrame(self)
+
         self.capture_frame.geometryChanged.connect(
             self._on_frame_geometry_changed
         )
@@ -370,6 +376,9 @@ class RecorderTab(QWidget):
             resizable = False
             aspect_ratio = None
 
+        if isinstance(self.capture_frame, WaylandCaptureOverlay):
+            self.capture_frame.set_target_screen(screen)
+
         self.capture_frame.configure(
             geometry,
             logical_width,
@@ -390,9 +399,12 @@ class RecorderTab(QWidget):
             return
 
         self._apply_preset(center=not self.capture_frame.isVisible())
-        self.capture_frame.show()
-        self.capture_frame.raise_()
-        self.capture_frame.activateWindow()
+        if isinstance(self.capture_frame, WaylandCaptureOverlay):
+            self.capture_frame.show_on_screen(screen)
+        else:
+            self.capture_frame.show()
+            self.capture_frame.raise_()
+            self.capture_frame.activateWindow()
         self.status_label.setText(
             "Capture frame visible. Position it on the selected monitor."
         )
