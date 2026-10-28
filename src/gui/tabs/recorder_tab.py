@@ -569,6 +569,15 @@ class RecorderTab(QWidget):
             output_path = output_path.with_suffix(".mp4")
             self.filename_edit.setText(output_path.name)
 
+        if output_path.suffix.lower() != ".mp4":
+            QMessageBox.warning(
+                self,
+                "Screen recording",
+                "Screen Recorder currently writes MP4 output. "
+                "Use a .mp4 filename.",
+            )
+            return
+
         if output_path.exists():
             answer = QMessageBox.question(
                 self,
