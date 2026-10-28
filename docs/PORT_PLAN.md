@@ -46,9 +46,22 @@ Acceptance is defined in `docs/RAW_CUTTER_RHEL8.md`.
 
 Acceptance is defined in `docs/ASSEMBLY_RHEL8.md`.
 
-## Step 4 - Linux Screen Recorder
+## Step 4 - Linux Screen Recorder — IMPLEMENTED, awaiting RHEL8 validation
 
-Detect X11 vs Wayland first. Implement the appropriate Linux capture backend instead of porting Windows capture code.
+- automatic X11 vs Wayland session detection
+- monitor-aware resolution/aspect presets and capture-area selection
+- X11: direct FFmpeg x11grab recording
+- Wayland/GNOME: org.gnome.Shell.Screencast.ScreencastArea over session D-Bus
+- Wayland-safe fullscreen region-selection overlay instead of unsupported top-level window positioning
+- capture frame hidden before recording starts
+- 30/60 FPS
+- graceful Stop
+- Wayland WebM capture converted to final MP4 through application-local FFmpeg
+- safe partial output / overwrite protection
+- Help -> Diagnostics and preflight backend readiness checks
+- real x11grab CI capture under Xvfb
+
+Acceptance is defined in `docs/SCREEN_RECORDER_RHEL8.md`.
 
 ## Step 5 - No-sudo deployment
 
