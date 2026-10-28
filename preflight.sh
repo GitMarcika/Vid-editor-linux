@@ -54,6 +54,16 @@ echo "Application-local media tools:"
 if [[ -x tools/ffmpeg/ffmpeg ]]; then
     echo "  ffmpeg: tools/ffmpeg/ffmpeg"
     tools/ffmpeg/ffmpeg -version 2>/dev/null | head -n1 || true
+    if tools/ffmpeg/ffmpeg -hide_banner -encoders 2>/dev/null | grep -Fq "libx264"; then
+        echo "  libx264: found"
+    else
+        echo "  libx264: NOT FOUND"
+    fi
+    if tools/ffmpeg/ffmpeg -hide_banner -filters 2>/dev/null | awk '{print $2}' | grep -Fxq "ass"; then
+        echo "  ASS/libass: found"
+    else
+        echo "  ASS/libass: NOT FOUND"
+    fi
 else
     echo "  ffmpeg: not installed locally"
 fi
