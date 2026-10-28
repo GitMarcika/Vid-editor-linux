@@ -21,10 +21,10 @@ be9312f813741e23beae2788adc085592cff0aaa
 Current development branch:
 
 ```text
-port/rhel8-step2
+port/rhel8-step3
 ```
 
-## Step 1 + Step 2 status
+## Step 1 + Step 2 + Step 3 status
 
 The shared application/editor core is present. Raw Cutter now has user-space FFmpeg/FFprobe provisioning and Linux-safe export hardening. Windows recording code remains deliberately excluded and the Screen Recorder tab uses a Linux placeholder until Step 4.
 
@@ -60,3 +60,17 @@ VIDEDITOR_FFMPEG_ARCHIVE=/path/to/ffmpeg.tar.xz ./setup_ffmpeg.sh
 The default online source is the BtbN GPL static Linux x86_64 FFmpeg 8.1 release branch, which targets RHEL/CentOS 8 and newer.
 
 See `docs/RAW_CUTTER_RHEL8.md` for the Step 2 acceptance checklist.
+
+
+## Assembly on Linux
+
+Step 3 validates the common Assembly editor on Linux:
+
+- ordered multi-clip timeline
+- mixed source resolution/FPS normalization
+- optional source audio with silence for clips that have none
+- timed styled text overlays rendered through ASS/libass
+- safe final export using a partial file before replacing the destination
+- Windows `.vedproj` media references can be relocated by filename on Linux
+
+See `docs/ASSEMBLY_RHEL8.md`.
