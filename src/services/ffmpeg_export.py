@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -11,8 +12,9 @@ CropRect = Tuple[int, int, int, int]
 
 
 def find_ffmpeg() -> Optional[str]:
-    bundled = application_base_dir() / "tools" / "ffmpeg" / "ffmpeg.exe"
-    if bundled.is_file():
+    executable = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+    bundled = application_base_dir() / "tools" / "ffmpeg" / executable
+    if bundled.is_file() and (os.name == "nt" or os.access(bundled, os.X_OK)):
         return str(bundled)
 
     return shutil.which("ffmpeg")
@@ -32,8 +34,13 @@ def build_export_arguments(
     if min(x, y) < 0 or width <= 0 or height <= 0:
         raise ValueError("Invalid crop rectangle.")
 
+    if width % 2 or height % 2:
+        raise ValueError(
+            "Crop width and height must be even for H.264/yuv420p export."
+        )
+
     duration_ms = end_ms - start_ms
-    return [
+    arguments = [
         "-hide_banner",
         "-nostdin",
         "-y",
@@ -55,15 +62,25 @@ def build_export_arguments(
         "medium",
         "-crf",
         "18",
+        "-pix_fmt",
+        "yuv420p",
         "-c:a",
         "aac",
-        "-movflags",
-        "+faststart",
-        "-progress",
         "pipe:1",
-        "-nostats",
-        str(output_path),
     ]
+
+    if output_path.suffix.lower() in (".mp4", ".mov", ".m4v"):
+        arguments.extend(["-movflags", "+faststart"])
+
+    arguments.extend(
+        [
+            "-progress",
+            "pipe:1",
+            "-nostats",
+            str(output_path),
+        ]
+    )
+    return arguments
 
 
 class FfmpegExportJob(QObject):
