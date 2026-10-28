@@ -61,6 +61,7 @@ sha256sum -c VidEditor-rhel8-x86_64.tar.gz.sha256
 tar -xzf VidEditor-rhel8-x86_64.tar.gz
 cd VidEditor
 ./preflight.sh
+./acceptance.sh
 ./run.sh
 ```
 
@@ -122,3 +123,36 @@ The installer verifies the archive SHA256 before extracting it.
 11. Move the entire extracted `VidEditor` directory to another user-writable path and repeat startup/preflight to verify relocation.
 
 If corporate application policy blocks the frozen executable, record the exact security/EDR message. Do not attempt to bypass application-control policy.
+
+
+## One-command final acceptance
+
+Run:
+
+```bash
+./acceptance.sh
+```
+
+The script is non-destructive with respect to normal application settings: the frozen probe uses a separate acceptance settings file.
+
+It automatically checks:
+
+- package/runtime/preflight integrity
+- frozen GUI/MainWindow startup
+- all three tabs
+- application-local FFmpeg/FFprobe
+- isolated JSON settings write/read
+- project save/load
+- cross-platform media basename handling
+- Unicode/space-containing paths
+- synthetic source generation
+- Raw Cutter service crop/trim
+- thumbnail generation
+- Assembly render with mixed inputs, silence handling and ASS overlay
+- FFprobe output validation
+- recorder backend capability for the active session
+- logs and build provenance
+
+Results are written to `user_data/acceptance/<timestamp>/`.
+
+Automatic PASS is followed by the packaged `ACCEPTANCE_MANUAL.md` checklist.
