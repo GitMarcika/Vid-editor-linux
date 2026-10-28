@@ -29,7 +29,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check shell syntax
-        run: bash -n install.sh run.sh preflight.sh setup_ffmpeg.sh
+        run: |
+          bash -n install.sh run.sh preflight.sh setup_ffmpeg.sh
+          bash -n build_portable_rhel8.sh
+          bash -n packaging/run-portable.sh packaging/portable-preflight.sh
 
       - name: Install Qt runtime libraries
         run: |
