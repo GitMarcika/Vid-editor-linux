@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check shell syntax
-        run: bash -n install.sh run.sh preflight.sh
+        run: bash -n install.sh run.sh preflight.sh setup_ffmpeg.sh
 
       - name: Install Qt runtime libraries
         run: |
@@ -47,7 +47,10 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Compile sources
-        run: python -m compileall -q src tests
+        run: python -m compileall -q src tests tools/ffmpeg
+
+      - name: Smoke-test FFmpeg provisioner CLI
+        run: python tools/ffmpeg/install_ffmpeg.py --help >/dev/null
 
       - name: Run unit tests
         run: python -m unittest discover -v
