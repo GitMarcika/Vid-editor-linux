@@ -53,7 +53,9 @@ jobs:
                 libxcb \
                 libxkbcommon \
                 libxkbcommon-x11 \
+                wayland-libs \
                 xcb-util \
+                xcb-util-cursor \
                 xcb-util-image \
                 xcb-util-keysyms \
                 xcb-util-renderutil \
