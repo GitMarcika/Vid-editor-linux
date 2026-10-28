@@ -66,7 +66,6 @@ def build_export_arguments(
         "yuv420p",
         "-c:a",
         "aac",
-        "pipe:1",
     ]
 
     if output_path.suffix.lower() in (".mp4", ".mov", ".m4v"):
