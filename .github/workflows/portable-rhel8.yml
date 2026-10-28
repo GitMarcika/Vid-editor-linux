@@ -8,6 +8,9 @@ on:
       - "port/rhel8-step6"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: portable-rhel8-${{ github.ref }}
   cancel-in-progress: true
@@ -112,3 +115,26 @@ jobs:
             dist/VidEditor/user_data/acceptance/
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish easy-download RHEL8 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if gh release view rhel8-latest >/dev/null 2>&1; then
+            gh release upload rhel8-latest \
+              dist/VidEditor-rhel8-x86_64.tar.gz \
+              dist/VidEditor-rhel8-x86_64.tar.gz.sha256 \
+              --clobber
+            gh release edit rhel8-latest \
+              --title "Vid Editor RHEL8 portable - latest" \
+              --notes "Portable no-sudo RHEL8 build. Built and automatically accepted on Rocky Linux 8. Source commit: $GITHUB_SHA"
+          else
+            gh release create rhel8-latest \
+              dist/VidEditor-rhel8-x86_64.tar.gz \
+              dist/VidEditor-rhel8-x86_64.tar.gz.sha256 \
+              --target "$GITHUB_SHA" \
+              --title "Vid Editor RHEL8 portable - latest" \
+              --notes "Portable no-sudo RHEL8 build. Built and automatically accepted on Rocky Linux 8. Source commit: $GITHUB_SHA"
+          fi
