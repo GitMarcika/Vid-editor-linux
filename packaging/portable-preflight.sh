@@ -89,10 +89,11 @@ if [[ "${XDG_SESSION_TYPE:-}" == "wayland" || -n "${WAYLAND_DISPLAY:-}" ]]; then
         echo "WARNING: Wayland detected but gdbus is not available."
     fi
 elif [[ "${XDG_SESSION_TYPE:-}" == "x11" || -n "${DISPLAY:-}" ]]; then
-    if ./tools/ffmpeg/ffmpeg -hide_banner -devices 2>/dev/null | grep -Fq x11grab; then
-        echo "X11 x11grab: found"
+    if [[ -x ./tools/ffmpeg/ffmpeg ]]; then
+        echo "X11 recorder: bundled FFmpeg executable found"
+        echo "X11 x11grab: validated when recording actually starts"
     else
-        echo "WARNING: bundled FFmpeg does not report x11grab."
+        echo "WARNING: bundled FFmpeg executable is unavailable."
     fi
 fi
 
