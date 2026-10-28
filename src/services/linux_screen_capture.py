@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -249,6 +250,63 @@ def build_wayland_transcode_arguments(
 
     args.append(str(output_path))
     return args
+
+
+
+def check_gnome_screencast_area(
+    gdbus_path: Optional[str],
+) -> Tuple[bool, str]:
+    if not gdbus_path:
+        return False, "gdbus was not found."
+
+    try:
+        completed = subprocess.run(
+            [gdbus_path] + gnome_screencast_introspect_arguments(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, str(exc)
+
+    if completed.returncode != 0:
+        return False, completed.stdout.strip()[-2000:]
+
+    if "ScreencastArea" not in completed.stdout:
+        return False, "GNOME ScreencastArea D-Bus method was not found."
+
+    return True, "GNOME ScreencastArea is available."
+
+
+def check_ffmpeg_x11grab(ffmpeg_path: Optional[str]) -> Tuple[bool, str]:
+    if not ffmpeg_path:
+        return False, "FFmpeg was not found."
+
+    try:
+        completed = subprocess.run(
+            [ffmpeg_path, "-hide_banner", "-devices"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+            timeout=8,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, str(exc)
+
+    if completed.returncode != 0:
+        return False, completed.stdout.strip()[-2000:]
+
+    has_x11grab = any(
+        "x11grab" in line and "D" in line[:4]
+        for line in completed.stdout.splitlines()
+    )
+    if not has_x11grab:
+        return False, "FFmpeg x11grab input device was not found."
+
+    return True, "FFmpeg x11grab is available."
 
 
 class X11RecordingJob(QObject):
