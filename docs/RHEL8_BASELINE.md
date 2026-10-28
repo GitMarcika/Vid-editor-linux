@@ -47,3 +47,22 @@ commit: be9312f813741e23beae2788adc085592cff0aaa
 ```
 
 Windows-only recorder code is not part of the Linux baseline.
+
+
+## Screen recording baseline
+
+RHEL8 GNOME can run on X11 or Wayland. The application detects the active session through `XDG_SESSION_TYPE`, `DISPLAY`, and `WAYLAND_DISPLAY`.
+
+X11 requirements:
+
+- application-local FFmpeg with the `x11grab` input device
+- active `DISPLAY`
+
+Wayland requirements:
+
+- GNOME Shell session
+- `gdbus` available in the user environment
+- `org.gnome.Shell.Screencast.ScreencastArea` available on the session D-Bus
+- application-local FFmpeg for final WebM -> MP4 conversion
+
+The Wayland implementation does not use KMS/DRM capture and does not require DRM master, CAP_SYS_ADMIN, root, or sudo.
