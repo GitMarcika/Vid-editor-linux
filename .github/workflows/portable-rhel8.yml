@@ -1,0 +1,98 @@
+name: portable-rhel8
+
+on:
+  push:
+    branches:
+      - main
+      - "port/rhel8-step5"
+  workflow_dispatch:
+
+concurrency:
+  group: portable-rhel8-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-portable:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build and smoke-test inside Rocky Linux 8
+        run: |
+          docker run --rm \
+            -v "$PWD:/src" \
+            -w /src \
+            rockylinux:8 \
+            bash -lc '
+              set -euo pipefail
+
+              dnf install -y \
+                ca-certificates \
+                python39 \
+                python39-pip \
+                python39-devel \
+                tar \
+                gzip \
+                xz \
+                curl \
+                glib2 \
+                dbus-libs \
+                fontconfig \
+                freetype \
+                mesa-libEGL \
+                mesa-libGL \
+                libX11 \
+                libXext \
+                libXrender \
+                libXcursor \
+                libXi \
+                libXtst \
+                libXrandr \
+                libxcb \
+                libxkbcommon \
+                libxkbcommon-x11 \
+                xcb-util \
+                xcb-util-image \
+                xcb-util-keysyms \
+                xcb-util-renderutil \
+                xcb-util-wm \
+                pulseaudio-libs \
+                alsa-lib \
+                xorg-x11-server-Xvfb \
+                xorg-x11-xauth
+
+              ./build_portable_rhel8.sh
+
+              test -x dist/VidEditor/VidEditor
+              test -x dist/VidEditor/tools/ffmpeg/ffmpeg
+              test -x dist/VidEditor/tools/ffmpeg/ffprobe
+              test -f dist/VidEditor/portable.flag
+
+              XDG_SESSION_TYPE=x11 \
+                xvfb-run -a -s "-screen 0 1280x720x24" \
+                ./dist/VidEditor/preflight.sh
+
+              XDG_SESSION_TYPE=x11 \
+                VIDEDITOR_SMOKE_TEST=1 \
+                xvfb-run -a -s "-screen 0 1280x720x24" \
+                ./dist/VidEditor/run.sh
+            '
+
+      - name: Verify archive and checksum
+        run: |
+          test -f dist/VidEditor-rhel8-x86_64.tar.gz
+          test -f dist/VidEditor-rhel8-x86_64.tar.gz.sha256
+          sha256sum -c dist/VidEditor-rhel8-x86_64.tar.gz.sha256
+          tar -tzf dist/VidEditor-rhel8-x86_64.tar.gz | head -n 40
+
+      - name: Upload portable RHEL8 package
+        uses: actions/upload-artifact@v4
+        with:
+          name: VidEditor-rhel8-x86_64
+          path: |
+            dist/VidEditor-rhel8-x86_64.tar.gz
+            dist/VidEditor-rhel8-x86_64.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 14
