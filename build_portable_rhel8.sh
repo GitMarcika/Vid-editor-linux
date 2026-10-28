@@ -68,8 +68,10 @@ cp -L "$XCB_CURSOR_LIB" "$PACKAGE_DIR/_internal/libxcb-cursor.so.0"
 
 cp packaging/run-portable.sh "$PACKAGE_DIR/run.sh"
 cp packaging/portable-preflight.sh "$PACKAGE_DIR/preflight.sh"
+cp packaging/acceptance-rhel8.sh "$PACKAGE_DIR/acceptance.sh"
+cp packaging/ACCEPTANCE_MANUAL.md "$PACKAGE_DIR/ACCEPTANCE_MANUAL.md"
 cp packaging/THIRD_PARTY_NOTICES.md "$PACKAGE_DIR/THIRD_PARTY_NOTICES.md"
-chmod u+x "$PACKAGE_DIR/run.sh" "$PACKAGE_DIR/preflight.sh"
+chmod u+x "$PACKAGE_DIR/run.sh" "$PACKAGE_DIR/preflight.sh" "$PACKAGE_DIR/acceptance.sh"
 : > "$PACKAGE_DIR/portable.flag"
 
 mkdir -p "$PACKAGE_DIR/user_data/logs"
