@@ -1224,8 +1224,8 @@ class AssemblyTab(QWidget):
             QMessageBox.critical(
                 self,
                 "FFmpeg not found",
-                "FFmpeg was not found. Place ffmpeg.exe in "
-                "tools\\ffmpeg\\ or make it available on PATH.",
+                "FFmpeg was not found. Run ./setup_ffmpeg.sh or place the "
+                "Linux ffmpeg binary in tools/ffmpeg/ffmpeg.",
             )
             return
 
@@ -1354,7 +1354,9 @@ class AssemblyTab(QWidget):
         if error == QMediaPlayer.Error.NoError:
             return
         message = error_string or self.player.errorString() or "Unknown media error"
-        self.status_label.setText(f"Playback error: {message}")
+        self.status_label.setText(
+            f"Playback error: {message}. FFmpeg final export may still work."
+        )
 
     def project_state(self) -> Dict[str, Any]:
         clips = []
