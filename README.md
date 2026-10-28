@@ -21,14 +21,14 @@ be9312f813741e23beae2788adc085592cff0aaa
 Current development branch:
 
 ```text
-port/rhel8-step4
+port/rhel8-step5
 ```
 
-## Step 1 + Step 2 + Step 3 + Step 4 status
+## Step 1 + Step 2 + Step 3 + Step 4 + Step 5 status
 
-The shared application/editor core is present. Raw Cutter now has user-space FFmpeg/FFprobe provisioning and Linux-safe export hardening. Windows recording code remains deliberately excluded and the Screen Recorder tab uses a Linux placeholder until Step 4.
+The shared application/editor core, Raw Cutter, Assembly and Linux Screen Recorder are present. Step 5 adds a frozen RHEL8 portable package so the target workstation does not need Python, pip, a venv, or a system FFmpeg installation.
 
-On a RHEL8-class graphical workstation that already has Python 3.9-3.11:
+Source/development mode on a RHEL8-class graphical workstation with Python 3.9-3.11:
 
 ```bash
 ./preflight.sh
@@ -38,7 +38,7 @@ On a RHEL8-class graphical workstation that already has Python 3.9-3.11:
 
 The bootstrap creates only `.venv` inside the repository and never invokes sudo.
 
-Step 1 intentionally does not promise final offline/runtime packaging yet. If the target machine lacks a compatible Python or required desktop libraries, the script stops cleanly; the final user-space runtime is Step 5.
+Normal target-machine use should prefer the Step 5 portable package below. Source/development mode remains available for debugging.
 
 See:
 
@@ -88,3 +88,31 @@ Wayland does not allow arbitrary application-controlled top-level window positio
 No root/sudo access is required.
 
 See `docs/SCREEN_RECORDER_RHEL8.md`.
+
+
+## Portable RHEL8 package
+
+The target workstation does **not** need Python, pip, a virtualenv or a system FFmpeg install.
+
+CI/build output:
+
+```text
+VidEditor-rhel8-x86_64.tar.gz
+VidEditor-rhel8-x86_64.tar.gz.sha256
+```
+
+Target-machine flow:
+
+```bash
+sha256sum -c VidEditor-rhel8-x86_64.tar.gz.sha256
+tar -xzf VidEditor-rhel8-x86_64.tar.gz
+cd VidEditor
+./preflight.sh
+./run.sh
+```
+
+Everything writable stays under the extracted directory, primarily `user_data/`. No sudo/root command is used.
+
+The package is built in a Rocky Linux 8 environment because PyInstaller Linux bundles still use the target system's glibc; building on the oldest supported Linux generation avoids creating a binary that requires a newer glibc.
+
+See `docs/PORTABLE_RHEL8.md`.
