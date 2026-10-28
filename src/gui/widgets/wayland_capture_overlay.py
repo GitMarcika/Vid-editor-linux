@@ -89,6 +89,7 @@ class WaylandCaptureOverlay(QWidget):
 
     def show_on_screen(self, screen: QScreen) -> None:
         self._target_screen = screen
+        self.winId()
         handle = self.windowHandle()
         if handle is not None:
             handle.setScreen(screen)
