@@ -66,3 +66,27 @@ Wayland requirements:
 - application-local FFmpeg for final WebM -> MP4 conversion
 
 The Wayland implementation does not use KMS/DRM capture and does not require DRM master, CAP_SYS_ADMIN, root, or sudo.
+
+
+## Portable target baseline
+
+The final no-sudo target path is the frozen one-folder package, not the source bootstrap.
+
+Target requirements intentionally kept outside the package:
+
+- x86_64 Linux kernel/userspace compatible with RHEL8
+- glibc 2.28 or newer
+- a graphical desktop session
+- normal desktop X11/Wayland libraries provided by the workstation
+- GNOME session D-Bus + gdbus only when using the GNOME Wayland recorder backend
+
+Target requirements included in the package:
+
+- Python interpreter/runtime
+- PySide6 / Qt application runtime
+- Vid Editor code
+- FFmpeg and FFprobe
+- launch/preflight scripts
+- application-local settings/log directory
+
+The package never writes to /usr, /opt, /etc, or another system directory.
