@@ -58,14 +58,38 @@ chmod u+x "$PACKAGE_DIR/tools/ffmpeg/ffmpeg" "$PACKAGE_DIR/tools/ffmpeg/ffprobe"
 
 cp packaging/run-portable.sh "$PACKAGE_DIR/run.sh"
 cp packaging/portable-preflight.sh "$PACKAGE_DIR/preflight.sh"
+cp packaging/THIRD_PARTY_NOTICES.md "$PACKAGE_DIR/THIRD_PARTY_NOTICES.md"
 chmod u+x "$PACKAGE_DIR/run.sh" "$PACKAGE_DIR/preflight.sh"
 : > "$PACKAGE_DIR/portable.flag"
 
 mkdir -p "$PACKAGE_DIR/user_data/logs"
 
-ARCHIVE="dist/VidEditor-rhel8-x86_64.tar.gz"
+SOURCE_COMMIT="$(git rev-parse HEAD 2>/dev/null || printf unknown)"
+PYINSTALLER_VERSION="$(python -m PyInstaller --version 2>/dev/null || printf unknown)"
+FFMPEG_VERSION="$(tools/ffmpeg/ffmpeg -version 2>/dev/null | head -n1 || true)"
+{
+    echo "package=VidEditor-rhel8-x86_64"
+    echo "source_commit=$SOURCE_COMMIT"
+    echo "build_python=$(python --version 2>&1)"
+    echo "pyinstaller=$PYINSTALLER_VERSION"
+    echo "ffmpeg_asset=ffmpeg-n8.1.3-24-g92611900bb-linux64-gpl-8.1.tar.xz"
+    echo "ffmpeg_asset_sha256=3300aa8c1d68e79e20d22117d3748a6121a49fe09b7eece3dcc38b84a1104e71"
+    echo "ffmpeg_version=$FFMPEG_VERSION"
+    if [[ -r /etc/redhat-release ]]; then
+        echo "build_os=$(cat /etc/redhat-release)"
+    fi
+    if command -v ldd >/dev/null 2>&1; then
+        echo "build_glibc=$(ldd --version 2>&1 | head -n1)"
+    fi
+} > "$PACKAGE_DIR/BUILD_INFO.txt"
+
+ARCHIVE_NAME="VidEditor-rhel8-x86_64.tar.gz"
+ARCHIVE="dist/$ARCHIVE_NAME"
 tar -C dist -czf "$ARCHIVE" VidEditor
-sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+(
+    cd dist
+    sha256sum "$ARCHIVE_NAME" > "$ARCHIVE_NAME.sha256"
+)
 
 echo
 echo "Portable package ready:"
