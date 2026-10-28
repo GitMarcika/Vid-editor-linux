@@ -459,6 +459,7 @@ class GnomeWaylandRecordingJob(QObject):
         self._recording = False
         self._stop_requested = False
         self._stop_in_flight = False
+        self._stop_attempts = 0
         self._finished_emitted = False
         self._stderr_tail = ""
 
@@ -488,6 +489,7 @@ class GnomeWaylandRecordingJob(QObject):
 
     def _request_gnome_stop(self) -> None:
         self._stop_in_flight = True
+        self._stop_attempts += 1
         self.statusChanged.emit("Stopping GNOME Wayland screencast...")
         process = QProcess(self)
         process.setProgram(self._gdbus_path)
@@ -563,10 +565,18 @@ class GnomeWaylandRecordingJob(QObject):
             or not parse_gdbus_bool_result(stdout)
         ):
             details = stderr.strip() or stdout.strip()
+            if self._stop_attempts < 2:
+                self.statusChanged.emit(
+                    "GNOME stop did not confirm; retrying..."
+                )
+                QTimer.singleShot(500, self._request_gnome_stop)
+                return
+
             self._emit_finished_once(
                 False,
                 "GNOME Wayland screencast could not be stopped cleanly."
-                + (f"\n\n{details[-3000:]}" if details else ""),
+                + (f"\n\n{details[-3000:]}" if details else "")
+                + f"\n\nTemporary recording path: {self._webm_path}",
             )
             return
 
