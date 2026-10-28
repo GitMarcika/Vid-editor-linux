@@ -146,3 +146,18 @@ Automatic acceptance exercises the **frozen packaged application**, not the sour
 After automatic **PASS**, complete the packaged `ACCEPTANCE_MANUAL.md` for the few interactions that require human visual confirmation.
 
 The Linux port is not marked fully complete until both automatic and manual acceptance pass on the actual corporate RHEL8 workstation.
+
+
+### Portable runtime containment
+
+`./run.sh` keeps cache/config/data/temp state under `user_data/runtime/` by redirecting the standard XDG cache/config/data/state locations plus `TMPDIR` and the Mesa shader cache.
+
+`XDG_RUNTIME_DIR` is intentionally left unchanged so Wayland and the user-session D-Bus continue to work.
+
+Disposable runtime data can be cleared with:
+
+```bash
+./cleanup-runtime.sh
+```
+
+Deleting the entire extracted `VidEditor` directory removes all Vid Editor-owned portable state.
