@@ -49,23 +49,29 @@ def probe_duration_ms(path: Path) -> int:
             "executables in tools/ffmpeg."
         )
 
-    completed = subprocess.run(
-        [
-            ffprobe,
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            str(path),
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-        timeout=20,
-        creationflags=_creation_flags(),
-    )
+    try:
+        completed = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(path),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=20,
+            creationflags=_creation_flags(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            f"FFprobe timed out while reading {path.name}. "
+            "The player may still be able to open the video."
+        ) from exc
 
     if completed.returncode != 0:
         error = completed.stderr.decode("utf-8", errors="replace").strip()
@@ -133,23 +139,29 @@ def probe_video_info(path: Path) -> VideoInfo:
             "executables in tools/ffmpeg."
         )
 
-    completed = subprocess.run(
-        [
-            ffprobe,
-            "-v",
-            "error",
-            "-show_entries",
-            "stream=codec_type,width,height,avg_frame_rate:format=duration",
-            "-of",
-            "json",
-            str(path),
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-        timeout=20,
-        creationflags=_creation_flags(),
-    )
+    try:
+        completed = subprocess.run(
+            [
+                ffprobe,
+                "-v",
+                "error",
+                "-show_entries",
+                "stream=codec_type,width,height,avg_frame_rate:format=duration",
+                "-of",
+                "json",
+                str(path),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=20,
+            creationflags=_creation_flags(),
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            f"FFprobe timed out while reading {path.name}. "
+            "The player may still be able to open the video."
+        ) from exc
 
     if completed.returncode != 0:
         error = completed.stderr.decode("utf-8", errors="replace").strip()
