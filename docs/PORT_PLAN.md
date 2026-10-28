@@ -33,9 +33,18 @@ Acceptance: on a RHEL8-class graphical workstation with a compatible Python alre
 
 Acceptance is defined in `docs/RAW_CUTTER_RHEL8.md`.
 
-## Step 3 - Assembly, overlays and final export
+## Step 3 - Assembly, overlays and final export — IMPLEMENTED, awaiting RHEL8 validation
 
-Validate clip timeline, project compatibility, styled overlays and final render.
+- mixed-resolution/FPS clips normalized to the first clip canvas/FPS
+- timeline duration explicitly applied to each video/audio segment
+- silence inserted for clips without audio
+- styled text overlays burned with ASS/libass
+- application-local FFmpeg must provide libx264 + ASS
+- safe partial-file final render and atomic replacement
+- Windows-style media paths resolved correctly when opening .vedproj on Linux
+- Linux end-to-end Assembly render test with audio/no-audio mixed clips and text overlay
+
+Acceptance is defined in `docs/ASSEMBLY_RHEL8.md`.
 
 ## Step 4 - Linux Screen Recorder
 
