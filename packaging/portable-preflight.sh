@@ -10,6 +10,8 @@ echo "Kernel/arch: $(uname -srm)"
 echo "Session: ${XDG_SESSION_TYPE:-unknown}"
 echo "DISPLAY: ${DISPLAY:-not set}"
 echo "WAYLAND_DISPLAY: ${WAYLAND_DISPLAY:-not set}"
+echo "Portable runtime sandbox: $PWD/user_data/runtime"
+echo "XDG_RUNTIME_DIR remains unchanged for Wayland/session D-Bus."
 
 if [[ "$(uname -m)" != "x86_64" ]]; then
     echo "ERROR: this package targets x86_64."
