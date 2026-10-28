@@ -91,8 +91,11 @@ jobs:
         run: |
           test -f dist/VidEditor-rhel8-x86_64.tar.gz
           test -f dist/VidEditor-rhel8-x86_64.tar.gz.sha256
-          sha256sum -c dist/VidEditor-rhel8-x86_64.tar.gz.sha256
-          tar -tzf dist/VidEditor-rhel8-x86_64.tar.gz | head -n 40
+          (
+            cd dist
+            sha256sum -c VidEditor-rhel8-x86_64.tar.gz.sha256
+            tar -tzf VidEditor-rhel8-x86_64.tar.gz | head -n 40
+          )
 
       - name: Upload portable RHEL8 package
         uses: actions/upload-artifact@v4
