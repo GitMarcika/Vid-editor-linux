@@ -77,6 +77,26 @@ Acceptance is defined in `docs/SCREEN_RECORDER_RHEL8.md`.
 
 Acceptance is defined in `docs/PORTABLE_RHEL8.md`.
 
-## Step 6 - RHEL8 acceptance and hardening
+## Step 6 - RHEL8 acceptance and hardening — IMPLEMENTED, real workstation sign-off pending
 
-Run the complete acceptance checklist on the real corporate workstation and fix observed compatibility/reliability issues before declaring the port complete.
+- portable package contains `acceptance.sh`
+- one command creates a timestamped acceptance report under `user_data/acceptance/`
+- frozen executable runs its own internal acceptance probe
+- internal probe validates MainWindow/three-tab construction
+- internal probe validates portable application paths and bundled FFmpeg/FFprobe resolution
+- isolated JSON settings roundtrip
+- .vedproj save/load roundtrip
+- Windows media-path basename compatibility
+- synthetic H.264/AAC generation in paths containing spaces and non-ASCII characters
+- Raw Cutter service trim/crop export + FFprobe verification
+- thumbnail extraction
+- Assembly mixed-resolution/audio-no-audio render + timed ASS overlay + FFprobe verification
+- active X11 or GNOME Wayland recorder capability check
+- application log and build provenance verification
+- short manual GUI checklist packaged as `ACCEPTANCE_MANUAL.md`
+- Rocky Linux 8 CI runs the same packaged `acceptance.sh`
+
+The port is declared complete only after:
+1. `./acceptance.sh` reports `AUTOMATIC RESULT: PASS` on the real corporate RHEL8 workstation.
+2. The applicable items in `ACCEPTANCE_MANUAL.md` pass on that workstation.
+3. Any observed machine-specific issue is fixed and re-tested.
