@@ -129,7 +129,7 @@ def probe_video_info(path: Path) -> VideoInfo:
     if not ffprobe:
         raise RuntimeError(
             "FFprobe was not found. Install FFmpeg/FFprobe or place both "
-            "executables in tools\\ffmpeg."
+            "executables in tools/ffmpeg."
         )
 
     completed = subprocess.run(
