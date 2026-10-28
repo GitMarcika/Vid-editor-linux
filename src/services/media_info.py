@@ -16,6 +16,7 @@ class VideoInfo:
     height: int
     fps: float
     has_audio: bool
+    duration_ms: int = 0
 
 
 def _creation_flags() -> int:
@@ -138,7 +139,7 @@ def probe_video_info(path: Path) -> VideoInfo:
             "-v",
             "error",
             "-show_entries",
-            "stream=codec_type,width,height,avg_frame_rate",
+            "stream=codec_type,width,height,avg_frame_rate:format=duration",
             "-of",
             "json",
             str(path),
@@ -189,10 +190,20 @@ def probe_video_info(path: Path) -> VideoInfo:
     if fps <= 0:
         fps = 30.0
 
+    duration_ms = 0
+    try:
+        duration_ms = max(
+            0,
+            round(float(payload.get("format", {}).get("duration", 0)) * 1000),
+        )
+    except (TypeError, ValueError):
+        duration_ms = 0
+
     return VideoInfo(
         width=width,
         height=height,
         fps=fps,
         has_audio=has_audio,
+        duration_ms=duration_ms,
     )
 
