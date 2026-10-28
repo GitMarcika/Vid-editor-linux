@@ -1,7 +1,10 @@
+import os
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from src.services.ffmpeg_export import build_export_arguments
+from src.services.ffmpeg_export import build_export_arguments, find_ffmpeg
 
 
 class FfmpegExportArgumentsTests(unittest.TestCase):
@@ -41,6 +44,21 @@ class FfmpegExportArgumentsTests(unittest.TestCase):
             (0, 0, 640, 480),
         )
         self.assertNotIn("+faststart", args)
+
+    @unittest.skipIf(os.name == "nt", "Linux executable bit behavior test")
+    def test_find_ffmpeg_prefers_application_local_binary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            binary = root / "tools" / "ffmpeg" / "ffmpeg"
+            binary.parent.mkdir(parents=True)
+            binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            binary.chmod(0o755)
+
+            with patch(
+                "src.services.ffmpeg_export.application_base_dir",
+                return_value=root,
+            ):
+                self.assertEqual(find_ffmpeg(), str(binary))
 
     def test_rejects_invalid_time_range(self) -> None:
         with self.assertRaises(ValueError):
