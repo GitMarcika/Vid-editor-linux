@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+import tempfile
 
 from src.services.linux_screen_capture import (
     build_wayland_transcode_arguments,
@@ -105,17 +106,21 @@ class LinuxScreenCaptureTests(unittest.TestCase):
         self.assertIn("scale=1920:1080", args)
         self.assertEqual(args[-1], "/tmp/final.mp4")
 
-    def test_x11_capability_parser(self) -> None:
-        completed = SimpleNamespace(
-            returncode=0,
-            stdout=" D  x11grab         X11 screen capture, using XCB\n",
-        )
-        with patch(
-            "src.services.linux_screen_capture.subprocess.run",
-            return_value=completed,
-        ):
-            ok, _ = check_ffmpeg_x11grab("/fake/ffmpeg")
+    @unittest.skipIf(os.name == "nt", "Linux executable-bit behavior")
+    def test_x11_capability_check_uses_executable_presence_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "ffmpeg"
+            binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            binary.chmod(0o755)
+
+            with patch(
+                "src.services.linux_screen_capture.subprocess.run",
+                side_effect=AssertionError("must not invoke ffmpeg -devices"),
+            ):
+                ok, detail = check_ffmpeg_x11grab(str(binary))
+
         self.assertTrue(ok)
+        self.assertIn("actual recording start", detail)
 
     def test_gnome_capability_parser(self) -> None:
         completed = SimpleNamespace(
