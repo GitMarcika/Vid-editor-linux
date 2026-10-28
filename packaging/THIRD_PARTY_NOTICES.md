@@ -18,3 +18,10 @@ This is a GPL build because Vid Editor requires libx264 support. Anyone redistri
 ## PySide6 / Qt
 
 The portable package contains PySide6 and Qt runtime files installed from the pinned Python dependency `PySide6==6.5.3`. Their licenses remain their respective upstream licenses.
+
+
+## xcb-util-cursor
+
+The portable Linux package includes `libxcb-cursor.so.0` from the RHEL8/EPEL xcb-util-cursor package so Qt 6.5's X11 platform plugin can run without installing that package on the target workstation.
+
+The xcb-util libraries remain subject to their upstream licenses.
