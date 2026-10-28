@@ -85,6 +85,23 @@ def validate_ffmpeg_features(path: Path) -> None:
             "The selected FFmpeg build does not provide libx264."
         )
 
+    filter_check = subprocess.run(
+        [str(path), "-hide_banner", "-filters"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        check=False,
+        timeout=20,
+    )
+    has_ass = any(
+        len(line.split()) >= 2 and line.split()[1] == "ass"
+        for line in filter_check.stdout.splitlines()
+    )
+    if filter_check.returncode != 0 or not has_ass:
+        raise RuntimeError(
+            "The selected FFmpeg build does not provide the ASS/libass filter."
+        )
+
 
 def download(url: str, destination: Path) -> None:
     print(f"Downloading FFmpeg from:\n  {url}")
