@@ -8,7 +8,7 @@ Priority order:
 
 The port is split into six implementation steps.
 
-## Step 1 - Linux baseline and shared application core
+## Step 1 - Linux baseline and shared application core — IMPLEMENTED
 
 - import the platform-independent editor/project code from the Windows edition
 - do not import the WinAPI/gdigrab recording backend
@@ -20,9 +20,18 @@ The port is split into six implementation steps.
 
 Acceptance: on a RHEL8-class graphical workstation with a compatible Python already available, `./install.sh` creates only a repository-local venv and `./run.sh` starts the three-tab GUI without sudo.
 
-## Step 2 - FFmpeg/FFprobe and Raw Cutter
+## Step 2 - FFmpeg/FFprobe and Raw Cutter — IMPLEMENTED, awaiting RHEL8 validation
 
-User-space FFmpeg/FFprobe, playback validation, trim/crop/export.
+- RHEL8-compatible x86_64 static FFmpeg/FFprobe user-space provisioning
+- online download or offline pre-downloaded archive path
+- no sudo/system install
+- local runtime preferred over PATH
+- FFprobe duration and resolution fallback before Qt playback
+- trim/crop H.264 export with yuv420p compatibility checks
+- safe partial-file export; final file replaced only after successful render
+- Linux FFmpeg end-to-end CI integration test
+
+Acceptance is defined in `docs/RAW_CUTTER_RHEL8.md`.
 
 ## Step 3 - Assembly, overlays and final export
 
