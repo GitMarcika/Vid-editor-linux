@@ -50,7 +50,22 @@ if [[ "$found" -eq 0 ]]; then
 fi
 
 echo
-echo "Existing media tools:"
+echo "Application-local media tools:"
+if [[ -x tools/ffmpeg/ffmpeg ]]; then
+    echo "  ffmpeg: tools/ffmpeg/ffmpeg"
+    tools/ffmpeg/ffmpeg -version 2>/dev/null | head -n1 || true
+else
+    echo "  ffmpeg: not installed locally"
+fi
+if [[ -x tools/ffmpeg/ffprobe ]]; then
+    echo "  ffprobe: tools/ffmpeg/ffprobe"
+    tools/ffmpeg/ffprobe -version 2>/dev/null | head -n1 || true
+else
+    echo "  ffprobe: not installed locally"
+fi
+
+echo
+echo "System/PATH media tools:"
 command -v ffmpeg 2>/dev/null || echo "  ffmpeg: not on PATH"
 command -v ffprobe 2>/dev/null || echo "  ffprobe: not on PATH"
 
