@@ -21,10 +21,10 @@ be9312f813741e23beae2788adc085592cff0aaa
 Current development branch:
 
 ```text
-port/rhel8-step5
+port/rhel8-step6
 ```
 
-## Step 1 + Step 2 + Step 3 + Step 4 + Step 5 status
+## Step 1 + Step 2 + Step 3 + Step 4 + Step 5 + Step 6 status
 
 The shared application/editor core, Raw Cutter, Assembly and Linux Screen Recorder are present. Step 5 adds a frozen RHEL8 portable package so the target workstation does not need Python, pip, a venv, or a system FFmpeg installation.
 
@@ -116,3 +116,33 @@ Everything writable stays under the extracted directory, primarily `user_data/`.
 The package is built in a Rocky Linux 8 environment because PyInstaller Linux bundles still use the target system's glibc; building on the oldest supported Linux generation avoids creating a binary that requires a newer glibc.
 
 See `docs/PORTABLE_RHEL8.md`.
+
+
+## Final RHEL8 acceptance
+
+After extracting the portable package, run:
+
+```bash
+cd VidEditor
+./acceptance.sh
+```
+
+The automatic runner creates:
+
+```text
+user_data/acceptance/YYYYMMDD-HHMMSS/
+  summary.txt
+  system-info.txt
+  preflight.txt
+  app-probe-console.txt
+  internal-probe.txt
+  BUILD_INFO.txt
+  vid-editor.log
+  ACCEPTANCE_MANUAL.md
+```
+
+Automatic acceptance exercises the **frozen packaged application**, not the source tree. It validates portable paths, settings/project persistence, bundled media tools, Raw Cutter service export, thumbnail extraction, Assembly render with ASS overlay, and the detected recorder backend capability.
+
+After automatic **PASS**, complete the packaged `ACCEPTANCE_MANUAL.md` for the few interactions that require human visual confirmation.
+
+The Linux port is not marked fully complete until both automatic and manual acceptance pass on the actual corporate RHEL8 workstation.
