@@ -71,6 +71,7 @@ class LinuxScreenCaptureTests(unittest.TestCase):
         self.assertIn(":0.0+10,20", args)
         self.assertIn("1280x720", args)
         self.assertIn("60", args)
+        self.assertNotIn("+faststart", args)
         self.assertEqual(args[-1], "/tmp/out.mp4")
 
     def test_gnome_start_arguments_include_region_and_fps(self) -> None:
