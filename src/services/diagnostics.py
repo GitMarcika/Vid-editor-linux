@@ -88,6 +88,16 @@ def _ffmpeg_has_libx264(path: Optional[str]) -> str:
     return "yes" if "libx264" in completed.stdout else "no"
 
 
+def _portable_build_info() -> str:
+    path = application_base_dir() / "BUILD_INFO.txt"
+    try:
+        if path.is_file():
+            return path.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        return f"ERROR reading BUILD_INFO.txt: {exc}"
+    return "not present (source/development run)"
+
+
 def build_diagnostics_report() -> str:
     ffmpeg = find_ffmpeg()
     ffprobe = find_ffprobe()
@@ -130,5 +140,8 @@ def build_diagnostics_report() -> str:
         f"Recorder backend: {recorder_backend}",
         f"Recorder backend ready: {'yes' if recorder_ok else 'no'}",
         f"Recorder detail: {recorder_detail}",
+        "",
+        "Portable build info:",
+        _portable_build_info(),
     ]
     return "\n".join(lines)
