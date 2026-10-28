@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from uuid import uuid4
 
 from PySide6.QtCore import QObject, QProcess, QTimer, Signal
 
@@ -204,14 +205,16 @@ def build_filter_graph(
     parts: List[str] = []
 
     for index, (_path, duration_ms, info) in enumerate(clip_infos):
+        duration_sec = max(0.001, duration_ms / 1000.0)
         parts.append(
             f"[{index}:v]"
             f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
             f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,"
-            f"fps={fps:.6f},setsar=1,setpts=PTS-STARTPTS[v{index}]"
+            f"fps={fps:.6f},"
+            f"trim=duration={duration_sec:.6f},"
+            f"setsar=1,setpts=PTS-STARTPTS[v{index}]"
         )
 
-        duration_sec = max(0.001, duration_ms / 1000.0)
         if info.has_audio:
             parts.append(
                 f"[{index}:a]"
@@ -324,8 +327,14 @@ def build_assembly_export_arguments(
             "aac",
             "-b:a",
             "192k",
-            "-movflags",
-            "+faststart",
+        ]
+    )
+
+    if output_path.suffix.lower() in (".mp4", ".mov", ".m4v"):
+        args.extend(["-movflags", "+faststart"])
+
+    args.extend(
+        [
             "-progress",
             "pipe:1",
             "-nostats",
@@ -354,7 +363,11 @@ class AssemblyExportJob(QObject):
         parent=None,
     ) -> None:
         super().__init__(parent)
-        self._output_path = Path(output_path)
+        self._final_output_path = Path(output_path)
+        self._output_path = self._final_output_path.with_name(
+            f".{self._final_output_path.stem}.partial-"
+            f"{uuid4().hex[:8]}{self._final_output_path.suffix}"
+        )
         self._work_dir = Path(tempfile.mkdtemp(prefix="videditor-export-"))
         self._cancel_requested = False
         self._finished_emitted = False
@@ -482,6 +495,17 @@ class AssemblyExportJob(QObject):
             and exit_code == 0
             and self._output_path.is_file()
         ):
+            try:
+                self._output_path.replace(self._final_output_path)
+            except OSError as exc:
+                self._cleanup_partial_output()
+                self._cleanup_work_dir()
+                self._emit_finished_once(
+                    False,
+                    f"Rendered video could not replace the final file: {exc}",
+                )
+                return
+
             self.progressChanged.emit(100)
             self._cleanup_work_dir()
             self._emit_finished_once(True, "Assembly export completed.")
