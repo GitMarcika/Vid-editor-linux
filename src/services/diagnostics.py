@@ -5,6 +5,11 @@ from pathlib import Path
 from typing import Optional
 
 from src.services.ffmpeg_export import find_ffmpeg
+from src.services.linux_screen_capture import (
+    check_ffmpeg_x11grab,
+    check_gnome_screencast_area,
+    detect_linux_session,
+)
 from src.services.media_info import find_ffprobe
 from src.utils.app_paths import (
     application_base_dir,
@@ -86,6 +91,20 @@ def _ffmpeg_has_libx264(path: Optional[str]) -> str:
 def build_diagnostics_report() -> str:
     ffmpeg = find_ffmpeg()
     ffprobe = find_ffprobe()
+    session = detect_linux_session()
+
+    if session.is_x11:
+        recorder_ok, recorder_detail = check_ffmpeg_x11grab(ffmpeg)
+        recorder_backend = "X11 / FFmpeg x11grab"
+    elif session.is_wayland:
+        recorder_ok, recorder_detail = check_gnome_screencast_area(
+            session.gdbus_path
+        )
+        recorder_backend = "Wayland / GNOME Shell ScreencastArea"
+    else:
+        recorder_ok = False
+        recorder_detail = "No supported graphical session detected."
+        recorder_backend = "unavailable"
 
     lines = [
         "Vid Editor diagnostics",
@@ -104,5 +123,12 @@ def build_diagnostics_report() -> str:
         f"FFmpeg ASS/libass: {_ffmpeg_has_filter(ffmpeg, 'ass')}",
         f"FFprobe path: {ffprobe or 'NOT FOUND'}",
         f"FFprobe version: {_first_version_line(ffprobe)}",
+        f"Session type: {session.kind}",
+        f"DISPLAY: {session.display or 'not set'}",
+        f"WAYLAND_DISPLAY: {session.wayland_display or 'not set'}",
+        f"gdbus: {session.gdbus_path or 'NOT FOUND'}",
+        f"Recorder backend: {recorder_backend}",
+        f"Recorder backend ready: {'yes' if recorder_ok else 'no'}",
+        f"Recorder detail: {recorder_detail}",
     ]
     return "\n".join(lines)
