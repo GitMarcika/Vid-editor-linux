@@ -65,6 +65,19 @@ print("PySide6:", PySide6.__version__)
 print("Qt import smoke test: OK")
 PY
 
+if [[ "${VIDEDITOR_SKIP_FFMPEG_SETUP:-0}" != "1" ]]; then
+    echo
+    echo "Checking local FFmpeg runtime..."
+    if ! ./setup_ffmpeg.sh; then
+        echo
+        echo "ERROR: Could not prepare the local FFmpeg runtime."
+        echo "For an offline install, copy a compatible .tar.xz archive and run:"
+        echo "  VIDEDITOR_FFMPEG_ARCHIVE=/path/to/archive.tar.xz ./setup_ffmpeg.sh"
+        echo "Or set VIDEDITOR_SKIP_FFMPEG_SETUP=1 to postpone this step."
+        exit 4
+    fi
+fi
+
 if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
     echo "WARNING: no DISPLAY or WAYLAND_DISPLAY is visible in this shell."
     echo "The GUI needs an existing graphical desktop session."
