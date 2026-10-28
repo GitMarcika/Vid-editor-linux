@@ -21,10 +21,10 @@ be9312f813741e23beae2788adc085592cff0aaa
 Current development branch:
 
 ```text
-port/rhel8-step3
+port/rhel8-step4
 ```
 
-## Step 1 + Step 2 + Step 3 status
+## Step 1 + Step 2 + Step 3 + Step 4 status
 
 The shared application/editor core is present. Raw Cutter now has user-space FFmpeg/FFprobe provisioning and Linux-safe export hardening. Windows recording code remains deliberately excluded and the Screen Recorder tab uses a Linux placeholder until Step 4.
 
@@ -74,3 +74,17 @@ Step 3 validates the common Assembly editor on Linux:
 - Windows `.vedproj` media references can be relocated by filename on Linux
 
 See `docs/ASSEMBLY_RHEL8.md`.
+
+
+## Linux Screen Recorder
+
+The recorder selects its backend from the active graphical session:
+
+- **X11:** FFmpeg `x11grab` records the selected region directly to MP4.
+- **GNOME Wayland:** the application calls GNOME Shell `ScreencastArea` over the user session D-Bus, then converts the GNOME WebM result to MP4 with the application-local FFmpeg.
+
+Wayland does not allow arbitrary application-controlled top-level window positioning, so region setup uses a fullscreen transparent selection overlay on the selected monitor. X11 keeps the lightweight movable red frame.
+
+No root/sudo access is required.
+
+See `docs/SCREEN_RECORDER_RHEL8.md`.
