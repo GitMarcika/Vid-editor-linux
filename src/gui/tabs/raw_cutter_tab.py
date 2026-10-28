@@ -27,7 +27,7 @@ from src.services.ffmpeg_export import (
     build_export_arguments,
     find_ffmpeg,
 )
-from src.services.media_info import probe_duration_ms, probe_video_info
+from src.services.media_info import probe_video_info
 from src.settings import AppSettings
 from src.utils.timecode import format_timecode, parse_timecode
 
@@ -312,14 +312,8 @@ class RawCutterTab(QWidget):
                 f"FFprobe video metadata unavailable: {exc}"
             )
 
-        try:
-            duration_ms = probe_duration_ms(path)
-            if duration_ms > 0:
-                self._on_duration_changed(duration_ms)
-        except (OSError, RuntimeError, ValueError) as exc:
-            self.status_label.setText(
-                f"FFprobe duration unavailable: {exc}"
-            )
+            if info.duration_ms > 0:
+                self._on_duration_changed(info.duration_ms)
 
     def _toggle_playback(self) -> None:
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
