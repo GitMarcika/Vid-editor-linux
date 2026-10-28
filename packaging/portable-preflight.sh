@@ -56,6 +56,28 @@ if command -v ldd >/dev/null 2>&1; then
             -name 'libQt6Multimedia.so*' \
         \) 2>/dev/null | head -n 10
     )
+
+    if [[ "${XDG_SESSION_TYPE:-}" == "wayland" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+        platform_plugin="$(find ./_internal -type f \
+            \( -name 'libqwayland-generic.so' -o -name 'libqwayland-egl.so' \) \
+            2>/dev/null | head -n1)"
+    else
+        platform_plugin="$(find ./_internal -type f -name 'libqxcb.so' \
+            2>/dev/null | head -n1)"
+    fi
+
+    if [[ -n "$platform_plugin" ]]; then
+        missing="$(ldd "$platform_plugin" 2>/dev/null | grep 'not found' || true)"
+        if [[ -n "$missing" ]]; then
+            echo "ERROR: unresolved Qt platform-plugin libraries:"
+            echo "$platform_plugin"
+            echo "$missing"
+            exit 7
+        fi
+        echo "Qt platform plugin dependencies: resolved"
+    else
+        echo "WARNING: matching Qt platform plugin was not found in _internal."
+    fi
 fi
 
 if [[ "${XDG_SESSION_TYPE:-}" == "wayland" || -n "${WAYLAND_DISPLAY:-}" ]]; then
