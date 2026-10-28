@@ -79,5 +79,47 @@ echo "System/PATH media tools:"
 command -v ffmpeg 2>/dev/null || echo "  ffmpeg: not on PATH"
 command -v ffprobe 2>/dev/null || echo "  ffprobe: not on PATH"
 
+
+echo
+echo "Screen recorder backend:"
+session_type="${XDG_SESSION_TYPE:-}"
+if [[ "$session_type" == "wayland" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+    echo "  selected: Wayland / GNOME Shell ScreencastArea"
+    if command -v gdbus >/dev/null 2>&1; then
+        echo "  gdbus: $(command -v gdbus)"
+        if gdbus introspect --session \
+            --dest org.gnome.Shell.Screencast \
+            --object-path /org/gnome/Shell/Screencast \
+            2>/dev/null | grep -Fq "ScreencastArea"; then
+            echo "  ScreencastArea: found"
+        else
+            echo "  ScreencastArea: NOT FOUND / unavailable in this session"
+        fi
+    else
+        echo "  gdbus: NOT FOUND"
+    fi
+elif [[ "$session_type" == "x11" || -n "${DISPLAY:-}" ]]; then
+    echo "  selected: X11 / FFmpeg x11grab"
+    if [[ -x tools/ffmpeg/ffmpeg ]]; then
+        if tools/ffmpeg/ffmpeg -hide_banner -devices 2>/dev/null \
+            | grep -Fq "x11grab"; then
+            echo "  x11grab: found"
+        else
+            echo "  x11grab: NOT FOUND"
+        fi
+    elif command -v ffmpeg >/dev/null 2>&1; then
+        if ffmpeg -hide_banner -devices 2>/dev/null | grep -Fq "x11grab"; then
+            echo "  x11grab: found on PATH FFmpeg"
+        else
+            echo "  x11grab: NOT FOUND on PATH FFmpeg"
+        fi
+    else
+        echo "  x11grab: FFmpeg not available"
+    fi
+else
+    echo "  selected: none"
+    echo "  No X11 or Wayland graphical session detected."
+fi
+
 echo
 echo "Preflight is read-only. No files or system settings were changed."
