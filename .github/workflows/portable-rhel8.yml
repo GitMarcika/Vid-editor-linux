@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - "port/rhel8-step5"
+      - "port/rhel8-step6"
   workflow_dispatch:
 
 concurrency:
@@ -44,6 +45,7 @@ jobs:
                 dbus-libs \
                 fontconfig \
                 freetype \
+                dejavu-sans-fonts \
                 mesa-libEGL \
                 mesa-libGL \
                 libX11 \
@@ -82,9 +84,12 @@ jobs:
                 ./dist/VidEditor/preflight.sh
 
               XDG_SESSION_TYPE=x11 \
-                VIDEDITOR_SMOKE_TEST=1 \
+                VIDEDITOR_ACCEPTANCE_ALLOW_ROOT=1 \
                 xvfb-run -a -s "-screen 0 1280x720x24" \
-                ./dist/VidEditor/run.sh
+                ./dist/VidEditor/acceptance.sh
+
+              grep -R -F "AUTOMATIC RESULT: PASS" \
+                dist/VidEditor/user_data/acceptance/*/summary.txt
             '
 
       - name: Verify archive and checksum
