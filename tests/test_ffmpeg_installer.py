@@ -2,6 +2,8 @@ import importlib.util
 import io
 import tarfile
 import tempfile
+from types import SimpleNamespace
+from unittest.mock import patch
 import unittest
 from pathlib import Path
 
@@ -35,6 +37,41 @@ class FfmpegInstallerTests(unittest.TestCase):
                 installer.find_binary(root, "ffmpeg"),
                 preferred,
             )
+
+    def test_validate_features_requires_libx264_and_ass(self) -> None:
+        responses = [
+            SimpleNamespace(
+                returncode=0,
+                stdout=" V..... libx264 H.264 encoder\n",
+            ),
+            SimpleNamespace(
+                returncode=0,
+                stdout=" ... ass V->V Render ASS subtitles\n",
+            ),
+        ]
+        with patch(
+            "ffmpeg_installer.subprocess.run",
+            side_effect=responses,
+        ):
+            installer.validate_ffmpeg_features(Path("/fake/ffmpeg"))
+
+    def test_validate_features_rejects_missing_ass(self) -> None:
+        responses = [
+            SimpleNamespace(
+                returncode=0,
+                stdout=" V..... libx264 H.264 encoder\n",
+            ),
+            SimpleNamespace(
+                returncode=0,
+                stdout=" ... scale V->V Scale video\n",
+            ),
+        ]
+        with patch(
+            "ffmpeg_installer.subprocess.run",
+            side_effect=responses,
+        ):
+            with self.assertRaises(RuntimeError):
+                installer.validate_ffmpeg_features(Path("/fake/ffmpeg"))
 
     def test_safe_extract_rejects_parent_escape(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
