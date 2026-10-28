@@ -253,7 +253,7 @@ def build_assembly_export_arguments(
     overlays: Sequence[Dict[str, Any]],
     output_path: Path,
     work_dir: Path,
-) -> Tuple[List[str], int, int, float]:
+) -> Tuple[List[str], int, int, int, float]:
     if not clips:
         raise ValueError("At least one clip is required.")
 
