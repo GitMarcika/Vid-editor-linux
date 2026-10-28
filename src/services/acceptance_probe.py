@@ -101,6 +101,23 @@ def run_internal_acceptance(main_window) -> Tuple[bool, str]:
         user_data_dir().resolve() == (base / "user_data").resolve(),
         str(user_data_dir()),
     )
+    runtime_root = (base / "user_data" / "runtime").resolve()
+    expected_runtime_env = {
+        "XDG_CACHE_HOME": runtime_root / "cache",
+        "XDG_CONFIG_HOME": runtime_root / "config",
+        "XDG_DATA_HOME": runtime_root / "data",
+        "XDG_STATE_HOME": runtime_root / "state",
+        "TMPDIR": runtime_root / "tmp",
+        "MESA_SHADER_CACHE_DIR": runtime_root / "cache" / "mesa",
+    }
+    for key, expected in expected_runtime_env.items():
+        value = os.environ.get(key, "")
+        check(
+            f"Portable runtime env {key}",
+            bool(value) and Path(value).resolve() == expected.resolve(),
+            value or "not set",
+        )
+
 
     try:
         tab_names = [
