@@ -1,5 +1,8 @@
 import platform
+import subprocess
 import sys
+from pathlib import Path
+from typing import Optional
 
 from src.services.ffmpeg_export import find_ffmpeg
 from src.services.media_info import find_ffprobe
@@ -11,7 +14,53 @@ from src.utils.app_paths import (
 )
 
 
+def _first_version_line(path: Optional[str]) -> str:
+    if not path:
+        return "NOT FOUND"
+
+    try:
+        completed = subprocess.run(
+            [path, "-version"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        return f"ERROR: {exc}"
+
+    lines = completed.stdout.splitlines()
+    if completed.returncode != 0:
+        return f"ERROR: exit {completed.returncode}"
+    return lines[0] if lines else "version unavailable"
+
+
+def _ffmpeg_has_libx264(path: Optional[str]) -> str:
+    if not path:
+        return "no"
+
+    try:
+        completed = subprocess.run(
+            [path, "-hide_banner", "-encoders"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+            timeout=8,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "error"
+
+    if completed.returncode != 0:
+        return "error"
+    return "yes" if "libx264" in completed.stdout else "no"
+
+
 def build_diagnostics_report() -> str:
+    ffmpeg = find_ffmpeg()
+    ffprobe = find_ffprobe()
+
     lines = [
         "Vid Editor diagnostics",
         "======================",
@@ -23,7 +72,10 @@ def build_diagnostics_report() -> str:
         f"User data dir: {user_data_dir()}",
         f"Settings file: {settings_file_path()}",
         f"Log dir: {log_dir()}",
-        f"FFmpeg: {find_ffmpeg() or 'NOT FOUND'}",
-        f"FFprobe: {find_ffprobe() or 'NOT FOUND'}",
+        f"FFmpeg path: {ffmpeg or 'NOT FOUND'}",
+        f"FFmpeg version: {_first_version_line(ffmpeg)}",
+        f"FFmpeg libx264: {_ffmpeg_has_libx264(ffmpeg)}",
+        f"FFprobe path: {ffprobe or 'NOT FOUND'}",
+        f"FFprobe version: {_first_version_line(ffprobe)}",
     ]
     return "\n".join(lines)
