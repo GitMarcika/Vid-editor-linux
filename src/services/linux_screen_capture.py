@@ -218,6 +218,7 @@ def parse_gdbus_bool_result(output: str) -> bool:
 def build_wayland_transcode_arguments(
     source_webm: Path,
     output_path: Path,
+    target_size: Optional[Tuple[int, int]] = None,
 ) -> List[str]:
     args = [
         "-hide_banner",
@@ -228,6 +229,19 @@ def build_wayland_transcode_arguments(
         "0:v:0",
         "-map",
         "0:a?",
+    ]
+
+    if target_size is not None:
+        _x, _y, target_width, target_height = make_even_region(
+            0,
+            0,
+            int(target_size[0]),
+            int(target_size[1]),
+        )
+        args.extend(["-vf", f"scale={target_width}:{target_height}"])
+
+    args.extend(
+        [
         "-c:v",
         "libx264",
         "-preset",
@@ -236,7 +250,8 @@ def build_wayland_transcode_arguments(
         "18",
         "-pix_fmt",
         "yuv420p",
-    ]
+        ]
+    )
 
     if output_path.suffix.lower() in (".mp4", ".mov", ".m4v"):
         args.extend(
@@ -342,6 +357,15 @@ class X11RecordingJob(QObject):
         self.statusChanged.emit("Starting X11 screen recording...")
         self.process.start()
 
+    def _on_start_error(self, error: QProcess.ProcessError) -> None:
+        if error != QProcess.FailedToStart:
+            return
+        self._cleanup_files()
+        self._emit_finished_once(
+            False,
+            "gdbus could not be started for GNOME Wayland capture.",
+        )
+
     def stop(self) -> None:
         if self.process.state() == QProcess.NotRunning:
             return
@@ -350,6 +374,13 @@ class X11RecordingJob(QObject):
 
         self._stop_requested = True
         self.statusChanged.emit("Stopping X11 recording...")
+        if self.process.state() == QProcess.Starting:
+            return
+        self._send_stop()
+
+    def _send_stop(self) -> None:
+        if self.process.state() == QProcess.NotRunning:
+            return
         self.process.write(b"q\n")
         self.process.waitForBytesWritten(100)
         self.process.closeWriteChannel()
@@ -367,6 +398,8 @@ class X11RecordingJob(QObject):
     def _on_started(self) -> None:
         self.statusChanged.emit("Recording (X11)...")
         self.started.emit()
+        if self._stop_requested:
+            self._send_stop()
 
     def _read_stderr(self) -> None:
         payload = bytes(self.process.readAllStandardError()).decode(
@@ -440,6 +473,7 @@ class GnomeWaylandRecordingJob(QObject):
         region: Tuple[int, int, int, int],
         fps: int,
         final_path: Path,
+        target_size: Optional[Tuple[int, int]] = None,
         parent=None,
     ) -> None:
         super().__init__(parent)
@@ -456,6 +490,7 @@ class GnomeWaylandRecordingJob(QObject):
         )
         self._region = region
         self._fps = int(fps)
+        self._target_size = target_size
         self._recording = False
         self._stop_requested = False
         self._stop_in_flight = False
@@ -478,6 +513,7 @@ class GnomeWaylandRecordingJob(QObject):
             )
         )
         self._process.setProcessChannelMode(QProcess.SeparateChannels)
+        self._process.errorOccurred.connect(self._on_start_error)
         self._process.finished.connect(self._on_start_finished)
         self._process.start()
 
@@ -495,6 +531,9 @@ class GnomeWaylandRecordingJob(QObject):
         process.setProgram(self._gdbus_path)
         process.setArguments(gnome_screencast_stop_arguments())
         process.setProcessChannelMode(QProcess.SeparateChannels)
+        process.errorOccurred.connect(
+            lambda error, p=process: self._on_stop_error(p, error)
+        )
         process.finished.connect(
             lambda exit_code, exit_status, p=process: self._on_stop_finished(
                 p,
@@ -503,6 +542,26 @@ class GnomeWaylandRecordingJob(QObject):
             )
         )
         process.start()
+
+    def _on_stop_error(
+        self,
+        process: QProcess,
+        error: QProcess.ProcessError,
+    ) -> None:
+        if error != QProcess.FailedToStart:
+            return
+        self._stop_in_flight = False
+        if self._stop_attempts < 2:
+            self.statusChanged.emit(
+                "GNOME stop process could not start; retrying..."
+            )
+            QTimer.singleShot(500, self._request_gnome_stop)
+            return
+        self._emit_finished_once(
+            False,
+            "gdbus could not be started to stop the GNOME screencast."
+            f"\n\nTemporary recording path: {self._webm_path}",
+        )
 
     def _on_start_finished(
         self,
@@ -609,9 +668,13 @@ class GnomeWaylandRecordingJob(QObject):
             build_wayland_transcode_arguments(
                 self._webm_path,
                 self._partial_final,
+                self._target_size,
             )
         )
         process.setProcessChannelMode(QProcess.SeparateChannels)
+        process.errorOccurred.connect(
+            lambda error, p=process: self._on_transcode_error(p, error)
+        )
         process.readyReadStandardError.connect(
             lambda p=process: self._read_transcode_stderr(p)
         )
@@ -623,6 +686,19 @@ class GnomeWaylandRecordingJob(QObject):
             )
         )
         process.start()
+
+    def _on_transcode_error(
+        self,
+        process: QProcess,
+        error: QProcess.ProcessError,
+    ) -> None:
+        if error != QProcess.FailedToStart:
+            return
+        self._cleanup_files()
+        self._emit_finished_once(
+            False,
+            "FFmpeg could not be started to convert the Wayland recording.",
+        )
 
     def _read_transcode_stderr(self, process: QProcess) -> None:
         payload = bytes(process.readAllStandardError()).decode(
