@@ -59,9 +59,9 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
 python - <<'PY'
-from PySide6.QtCore import __version__
+import PySide6
 from PySide6.QtWidgets import QApplication
-print("PySide6:", __version__)
+print("PySide6:", PySide6.__version__)
 print("Qt import smoke test: OK")
 PY
 
