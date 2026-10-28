@@ -25,8 +25,9 @@ def _creation_flags() -> int:
 
 
 def find_ffprobe() -> Optional[str]:
-    bundled = application_base_dir() / "tools" / "ffmpeg" / "ffprobe.exe"
-    if bundled.is_file():
+    executable = "ffprobe.exe" if os.name == "nt" else "ffprobe"
+    bundled = application_base_dir() / "tools" / "ffmpeg" / executable
+    if bundled.is_file() and (os.name == "nt" or os.access(bundled, os.X_OK)):
         return str(bundled)
 
     ffmpeg_path = find_ffmpeg()
@@ -44,7 +45,7 @@ def probe_duration_ms(path: Path) -> int:
     if not ffprobe:
         raise RuntimeError(
             "FFprobe was not found. Install FFmpeg/FFprobe or place both "
-            "executables in tools\\ffmpeg."
+            "executables in tools/ffmpeg."
         )
 
     completed = subprocess.run(
