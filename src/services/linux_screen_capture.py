@@ -457,6 +457,8 @@ class GnomeWaylandRecordingJob(QObject):
         self._region = region
         self._fps = int(fps)
         self._recording = False
+        self._stop_requested = False
+        self._stop_in_flight = False
         self._finished_emitted = False
         self._stderr_tail = ""
 
@@ -479,9 +481,13 @@ class GnomeWaylandRecordingJob(QObject):
         self._process.start()
 
     def stop(self) -> None:
-        if not self._recording:
+        self._stop_requested = True
+        if not self._recording or self._stop_in_flight:
             return
+        self._request_gnome_stop()
 
+    def _request_gnome_stop(self) -> None:
+        self._stop_in_flight = True
         self.statusChanged.emit("Stopping GNOME Wayland screencast...")
         process = QProcess(self)
         process.setProgram(self._gdbus_path)
@@ -531,6 +537,8 @@ class GnomeWaylandRecordingJob(QObject):
         self._recording = True
         self.statusChanged.emit("Recording (Wayland / GNOME)...")
         self.started.emit()
+        if self._stop_requested:
+            self._request_gnome_stop()
 
     def _on_stop_finished(
         self,
@@ -547,6 +555,7 @@ class GnomeWaylandRecordingJob(QObject):
             errors="replace",
         )
         self._recording = False
+        self._stop_in_flight = False
 
         if (
             exit_status != QProcess.NormalExit
