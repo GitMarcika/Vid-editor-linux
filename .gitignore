@@ -8,3 +8,6 @@ build/
 dist/
 user_data/
 .DS_Store
+tools/ffmpeg/ffmpeg
+tools/ffmpeg/ffprobe
+tools/ffmpeg/*.tar.xz
