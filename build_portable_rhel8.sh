@@ -56,6 +56,16 @@ cp tools/ffmpeg/ffmpeg "$PACKAGE_DIR/tools/ffmpeg/ffmpeg"
 cp tools/ffmpeg/ffprobe "$PACKAGE_DIR/tools/ffmpeg/ffprobe"
 chmod u+x "$PACKAGE_DIR/tools/ffmpeg/ffmpeg" "$PACKAGE_DIR/tools/ffmpeg/ffprobe"
 
+XCB_CURSOR_LIB="$(
+    ldconfig -p 2>/dev/null \
+        | awk '/libxcb-cursor\.so\.0/{print $NF; exit}'
+)"
+if [[ -z "$XCB_CURSOR_LIB" || ! -f "$XCB_CURSOR_LIB" ]]; then
+    echo "ERROR: libxcb-cursor.so.0 was not found on the RHEL8 build host." >&2
+    exit 5
+fi
+cp -L "$XCB_CURSOR_LIB" "$PACKAGE_DIR/_internal/libxcb-cursor.so.0"
+
 cp packaging/run-portable.sh "$PACKAGE_DIR/run.sh"
 cp packaging/portable-preflight.sh "$PACKAGE_DIR/preflight.sh"
 cp packaging/THIRD_PARTY_NOTICES.md "$PACKAGE_DIR/THIRD_PARTY_NOTICES.md"
