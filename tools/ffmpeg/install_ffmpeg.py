@@ -98,11 +98,29 @@ def download(url: str, destination: Path) -> None:
 
 def install(
     tools_dir: Path,
-    archive: Path | None,
+    archive: Optional[Path],
     url: str,
-    expected_sha256: str | None,
+    expected_sha256: Optional[str],
+    force: bool = False,
 ) -> None:
     tools_dir.mkdir(parents=True, exist_ok=True)
+    target_ffmpeg = tools_dir / "ffmpeg"
+    target_ffprobe = tools_dir / "ffprobe"
+
+    if not force and target_ffmpeg.is_file() and target_ffprobe.is_file():
+        try:
+            make_executable(target_ffmpeg)
+            make_executable(target_ffprobe)
+            validate_binary(target_ffmpeg, "ffmpeg")
+            validate_binary(target_ffprobe, "ffprobe")
+            validate_ffmpeg_features(target_ffmpeg)
+        except Exception as exc:
+            print(f"Existing FFmpeg runtime is invalid: {exc}")
+        else:
+            print("Existing FFmpeg runtime is valid; nothing to do.")
+            print(f"  {target_ffmpeg}")
+            print(f"  {target_ffprobe}")
+            return
 
     with tempfile.TemporaryDirectory(prefix="videditor-ffmpeg-") as temp_name:
         temp = Path(temp_name)
@@ -132,9 +150,6 @@ def install(
 
         source_ffmpeg = find_binary(extracted, "ffmpeg")
         source_ffprobe = find_binary(extracted, "ffprobe")
-
-        target_ffmpeg = tools_dir / "ffmpeg"
-        target_ffprobe = tools_dir / "ffprobe"
 
         shutil.copy2(source_ffmpeg, target_ffmpeg)
         shutil.copy2(source_ffprobe, target_ffprobe)
@@ -177,6 +192,11 @@ def main() -> int:
         "--sha256",
         default=os.environ.get("VIDEDITOR_FFMPEG_SHA256"),
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace an existing valid local FFmpeg runtime.",
+    )
     args = parser.parse_args()
 
     try:
@@ -185,6 +205,7 @@ def main() -> int:
             args.archive,
             args.url,
             args.sha256,
+            force=args.force,
         )
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
