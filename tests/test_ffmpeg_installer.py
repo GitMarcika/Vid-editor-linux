@@ -49,8 +49,9 @@ class FfmpegInstallerTests(unittest.TestCase):
                 stdout=" ... ass V->V Render ASS subtitles\n",
             ),
         ]
-        with patch(
-            "ffmpeg_installer.subprocess.run",
+        with patch.object(
+            installer.subprocess,
+            "run",
             side_effect=responses,
         ):
             installer.validate_ffmpeg_features(Path("/fake/ffmpeg"))
@@ -66,8 +67,9 @@ class FfmpegInstallerTests(unittest.TestCase):
                 stdout=" ... scale V->V Scale video\n",
             ),
         ]
-        with patch(
-            "ffmpeg_installer.subprocess.run",
+        with patch.object(
+            installer.subprocess,
+            "run",
             side_effect=responses,
         ):
             with self.assertRaises(RuntimeError):
