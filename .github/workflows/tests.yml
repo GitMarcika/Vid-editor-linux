@@ -1,0 +1,45 @@
+name: linux-tests
+
+on:
+  push:
+    branches:
+      - main
+      - "port/**"
+  pull_request:
+
+concurrency:
+  group: linux-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+
+    env:
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile sources
+        run: python -m compileall -q src tests
+
+      - name: Run unit tests
+        run: python -m unittest discover -v
