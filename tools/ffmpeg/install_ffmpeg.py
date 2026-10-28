@@ -14,8 +14,12 @@ from typing import Optional
 
 
 DEFAULT_URL = (
-    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/"
-    "ffmpeg-n8.1-latest-linux64-gpl-8.1.tar.xz"
+    "https://github.com/BtbN/FFmpeg-Builds/releases/download/"
+    "autobuild-2026-10-25-13-00/"
+    "ffmpeg-n8.1.3-24-g92611900bb-linux64-gpl-8.1.tar.xz"
+)
+DEFAULT_SHA256 = (
+    "3300aa8c1d68e79e20d22117d3748a6121a49fe09b7eece3dcc38b84a1104e71"
 )
 
 
@@ -208,7 +212,10 @@ def main() -> int:
     )
     parser.add_argument(
         "--sha256",
-        default=os.environ.get("VIDEDITOR_FFMPEG_SHA256"),
+        default=os.environ.get(
+            "VIDEDITOR_FFMPEG_SHA256",
+            DEFAULT_SHA256,
+        ),
     )
     parser.add_argument(
         "--force",
