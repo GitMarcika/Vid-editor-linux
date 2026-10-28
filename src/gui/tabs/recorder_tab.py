@@ -481,6 +481,24 @@ class RecorderTab(QWidget):
         rect = self.capture_frame.capture_geometry()
         return rect.x(), rect.y(), rect.width(), rect.height()
 
+    def _physical_capture_size(self) -> Optional[Tuple[int, int]]:
+        screen = self._selected_screen()
+        if screen is None:
+            return None
+
+        rect = self.capture_frame.capture_geometry()
+        geometry = screen.geometry()
+        _x, _y, width, height = logical_rect_to_physical(
+            rect.x(),
+            rect.y(),
+            rect.width(),
+            rect.height(),
+            geometry.x(),
+            geometry.y(),
+            float(screen.devicePixelRatio()),
+        )
+        return width, height
+
     def _x11_capture_region(self) -> Optional[Tuple[int, int, int, int]]:
         screen = self._selected_screen()
         if screen is None:
@@ -609,6 +627,11 @@ class RecorderTab(QWidget):
             "Capture frame hidden. Starting recording..."
         )
         self._recording_output = output_path
+        target_size = (
+            self._physical_capture_size()
+            if backend == "wayland"
+            else None
+        )
         self._pending_launch = (
             backend,
             session,
@@ -616,6 +639,7 @@ class RecorderTab(QWidget):
             region,
             fps,
             output_path,
+            target_size,
         )
         self._start_delay.start()
 
@@ -625,7 +649,15 @@ class RecorderTab(QWidget):
         if pending is None:
             return
 
-        backend, session, ffmpeg_path, region, fps, output_path = pending
+        (
+            backend,
+            session,
+            ffmpeg_path,
+            region,
+            fps,
+            output_path,
+            target_size,
+        ) = pending
 
         if backend == "x11":
             token = uuid4().hex[:8]
@@ -643,6 +675,7 @@ class RecorderTab(QWidget):
                 arguments,
                 partial_path,
                 output_path,
+                target_size=target_size,
                 parent=self,
             )
         else:
