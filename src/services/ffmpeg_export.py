@@ -55,7 +55,7 @@ def build_export_arguments(
         "-map",
         "0:a?",
         "-vf",
-        f"crop={width}:{height}:{x}:{y}",
+        f"crop={width}:{height}:{x}:{y}:exact=1",
         "-c:v",
         "libx264",
         "-preset",
