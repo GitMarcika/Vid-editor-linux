@@ -1,0 +1,1 @@
+"""Vid Editor application package."""
