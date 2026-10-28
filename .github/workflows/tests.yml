@@ -28,6 +28,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check shell syntax
+        run: bash -n install.sh run.sh preflight.sh
+
       - name: Install Qt runtime libraries
         run: |
           sudo apt-get update
