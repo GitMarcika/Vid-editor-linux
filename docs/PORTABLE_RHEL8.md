@@ -156,3 +156,31 @@ It automatically checks:
 Results are written to `user_data/acceptance/<timestamp>/`.
 
 Automatic PASS is followed by the packaged `ACCEPTANCE_MANUAL.md` checklist.
+
+
+## Runtime containment
+
+When started through `./run.sh`, Vid Editor redirects application/library cache and temporary data into:
+
+```text
+VidEditor/user_data/runtime/
+  cache/
+  config/
+  data/
+  state/
+  tmp/
+```
+
+The launcher sets `XDG_CACHE_HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, `TMPDIR`, and `MESA_SHADER_CACHE_DIR` to locations under that directory.
+
+`XDG_RUNTIME_DIR` is deliberately **not** overridden because Wayland and the user-session D-Bus depend on the desktop session\'s real runtime directory.
+
+This keeps normal Qt/GStreamer/fontconfig/Mesa caches and Vid Editor temporary files inside the extracted portable tree rather than in the user\'s normal `~/.cache` or `~/.config` locations.
+
+To remove only disposable cache/temp state:
+
+```bash
+./cleanup-runtime.sh
+```
+
+This does not remove settings, logs, exports or acceptance reports. Deleting the entire extracted `VidEditor` directory removes all Vid Editor-owned portable state.
