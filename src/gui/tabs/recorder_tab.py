@@ -675,7 +675,6 @@ class RecorderTab(QWidget):
                 arguments,
                 partial_path,
                 output_path,
-                target_size=target_size,
                 parent=self,
             )
         else:
@@ -685,6 +684,7 @@ class RecorderTab(QWidget):
                 region,
                 fps,
                 output_path,
+                target_size=target_size,
                 parent=self,
             )
 
