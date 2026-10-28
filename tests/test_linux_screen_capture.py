@@ -97,10 +97,12 @@ class LinuxScreenCaptureTests(unittest.TestCase):
         args = build_wayland_transcode_arguments(
             Path("/tmp/source.webm"),
             Path("/tmp/final.mp4"),
+            (1921, 1081),
         )
         self.assertIn("libx264", args)
         self.assertIn("yuv420p", args)
         self.assertIn("+faststart", args)
+        self.assertIn("scale=1920:1080", args)
         self.assertEqual(args[-1], "/tmp/final.mp4")
 
     def test_x11_capability_parser(self) -> None:
