@@ -69,6 +69,8 @@ class AssemblyExportTests(unittest.TestCase):
         )
 
         self.assertIn("scale=1920:1080", graph)
+        self.assertIn("trim=duration=1.000000", graph)
+        self.assertIn("trim=duration=2.000000", graph)
         self.assertIn("concat=n=2:v=1:a=1[vcat][acat]", graph)
         self.assertIn("anullsrc=channel_layout=stereo", graph)
         self.assertIn("[vcat]ass=", graph)
