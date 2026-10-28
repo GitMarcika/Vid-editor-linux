@@ -17,6 +17,7 @@ from src.gui.tabs.raw_cutter_tab import RawCutterTab
 from src.gui.tabs.recorder_tab import RecorderTab
 from src.project import empty_project, load_project, save_project
 from src.settings import AppSettings
+from src.utils.media_paths import media_reference_basename
 
 
 PROJECT_FILTER = "Vid Editor Project (*.vedproj);;JSON files (*.json);;All files (*.*)"
@@ -251,11 +252,13 @@ class MainWindow(QMainWindow):
         project_dir: Path,
     ) -> Optional[Path]:
         original = Path(reference)
+        basename = media_reference_basename(reference)
 
         candidates = [original]
         if not original.is_absolute():
             candidates.append(project_dir / original)
-        candidates.append(project_dir / original.name)
+        if basename:
+            candidates.append(project_dir / basename)
 
         seen = set()
         for candidate in candidates:
@@ -267,7 +270,7 @@ class MainWindow(QMainWindow):
                 return candidate.resolve()
 
         try:
-            matches = list(project_dir.rglob(original.name))
+            matches = list(project_dir.rglob(basename)) if basename else []
         except OSError:
             matches = []
         for match in matches:
@@ -287,7 +290,7 @@ class MainWindow(QMainWindow):
 
         filename, _ = QFileDialog.getOpenFileName(
             self,
-            f"Locate {original.name}",
+            f"Locate {basename or original.name}",
             str(project_dir),
             MEDIA_FILTER,
         )
