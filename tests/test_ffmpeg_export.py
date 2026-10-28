@@ -19,7 +19,7 @@ class FfmpegExportArgumentsTests(unittest.TestCase):
 
         self.assertIn("1.250000", args)
         self.assertIn("4.000000", args)
-        self.assertIn("crop=640:480:10:20", args)
+        self.assertIn("crop=640:480:10:20:exact=1", args)
         self.assertIn("0:a?", args)
         self.assertIn("yuv420p", args)
         self.assertIn("+faststart", args)
