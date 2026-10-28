@@ -1,5 +1,6 @@
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -42,6 +43,23 @@ class MediaInfoTests(unittest.TestCase):
         self.assertAlmostEqual(info.fps, 30000 / 1001, places=4)
         self.assertTrue(info.has_audio)
         self.assertEqual(info.duration_ms, 12345)
+
+    def test_probe_video_info_timeout_is_a_runtime_error(self) -> None:
+        with patch(
+            "src.services.media_info.find_ffprobe",
+            return_value="/fake/ffprobe",
+        ), patch(
+            "src.services.media_info.subprocess.run",
+            side_effect=subprocess.TimeoutExpired(
+                cmd=["/fake/ffprobe"],
+                timeout=20,
+            ),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "FFprobe timed out while reading video.mp4",
+            ):
+                probe_video_info(Path("video.mp4"))
 
     @unittest.skipIf(os.name == "nt", "Linux executable bit behavior test")
     def test_find_ffprobe_prefers_application_local_binary(self) -> None:
