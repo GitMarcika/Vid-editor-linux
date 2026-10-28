@@ -296,32 +296,28 @@ def check_gnome_screencast_area(
 
 
 def check_ffmpeg_x11grab(ffmpeg_path: Optional[str]) -> Tuple[bool, str]:
+    """
+    Lightweight X11 readiness check.
+
+    Do not call `ffmpeg -devices` here. On some enterprise/VNC RHEL8
+    workstations that compile-time listing can block for many seconds even
+    though real x11grab capture works. The actual recording start is the
+    authoritative x11grab test and returns useful FFmpeg stderr on failure.
+    """
     if not ffmpeg_path:
         return False, "FFmpeg was not found."
 
-    try:
-        completed = subprocess.run(
-            [ffmpeg_path, "-hide_banner", "-devices"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            check=False,
-            timeout=8,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        return False, str(exc)
+    path = Path(ffmpeg_path)
+    if not path.is_file():
+        return False, f"FFmpeg does not exist: {path}"
+    if not os.access(path, os.X_OK):
+        return False, f"FFmpeg is not executable: {path}"
 
-    if completed.returncode != 0:
-        return False, completed.stdout.strip()[-2000:]
-
-    has_x11grab = any(
-        "x11grab" in line and "D" in line[:4]
-        for line in completed.stdout.splitlines()
+    return (
+        True,
+        "FFmpeg executable is available. "
+        "x11grab is validated by the actual recording start.",
     )
-    if not has_x11grab:
-        return False, "FFmpeg x11grab input device was not found."
-
-    return True, "FFmpeg x11grab is available."
 
 
 class X11RecordingJob(QObject):
