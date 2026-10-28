@@ -36,6 +36,32 @@ def _first_version_line(path: Optional[str]) -> str:
     return lines[0] if lines else "version unavailable"
 
 
+def _ffmpeg_has_filter(path: Optional[str], filter_name: str) -> str:
+    if not path:
+        return "no"
+
+    try:
+        completed = subprocess.run(
+            [path, "-hide_banner", "-filters"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+            timeout=8,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "error"
+
+    if completed.returncode != 0:
+        return "error"
+
+    found = any(
+        len(line.split()) >= 2 and line.split()[1] == filter_name
+        for line in completed.stdout.splitlines()
+    )
+    return "yes" if found else "no"
+
+
 def _ffmpeg_has_libx264(path: Optional[str]) -> str:
     if not path:
         return "no"
@@ -75,6 +101,7 @@ def build_diagnostics_report() -> str:
         f"FFmpeg path: {ffmpeg or 'NOT FOUND'}",
         f"FFmpeg version: {_first_version_line(ffmpeg)}",
         f"FFmpeg libx264: {_ffmpeg_has_libx264(ffmpeg)}",
+        f"FFmpeg ASS/libass: {_ffmpeg_has_filter(ffmpeg, 'ass')}",
         f"FFprobe path: {ffprobe or 'NOT FOUND'}",
         f"FFprobe version: {_first_version_line(ffprobe)}",
     ]
