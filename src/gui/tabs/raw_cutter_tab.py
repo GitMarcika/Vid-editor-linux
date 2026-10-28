@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, Optional
+from uuid import uuid4
 
 from PySide6.QtCore import QSize, QUrl, Qt, Signal
 from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -26,6 +27,7 @@ from src.services.ffmpeg_export import (
     build_export_arguments,
     find_ffmpeg,
 )
+from src.services.media_info import probe_duration_ms, probe_video_info
 from src.settings import AppSettings
 from src.utils.timecode import format_timecode, parse_timecode
 
@@ -275,6 +277,8 @@ class RawCutterTab(QWidget):
                 int(crop.get("height", self.crop_height.value())),
             )
 
+        self._apply_ffprobe_metadata(path)
+
         self.player.setSource(QUrl.fromLocalFile(str(path)))
         self.play_button.setEnabled(True)
         self.timeline.setEnabled(True)
@@ -284,6 +288,38 @@ class RawCutterTab(QWidget):
 
         if mark_changed and not self._restoring_project:
             self.projectChanged.emit()
+
+    def _apply_ffprobe_metadata(self, path: Path) -> None:
+        try:
+            info = probe_video_info(path)
+            size = QSize(info.width, info.height)
+            self.video_surface.set_video_size(size)
+            self.source_size_label.setText(
+                f"Source: {info.width} x {info.height} px"
+            )
+
+            if self._pending_crop is not None:
+                crop = self._pending_crop
+                self.video_surface.set_crop_rect(
+                    int(crop.get("x", 0)),
+                    int(crop.get("y", 0)),
+                    int(crop.get("width", self.crop_width.value())),
+                    int(crop.get("height", self.crop_height.value())),
+                )
+                self._pending_crop = None
+        except (OSError, RuntimeError, ValueError) as exc:
+            self.status_label.setText(
+                f"FFprobe video metadata unavailable: {exc}"
+            )
+
+        try:
+            duration_ms = probe_duration_ms(path)
+            if duration_ms > 0:
+                self._on_duration_changed(duration_ms)
+        except (OSError, RuntimeError, ValueError) as exc:
+            self.status_label.setText(
+                f"FFprobe duration unavailable: {exc}"
+            )
 
     def _toggle_playback(self) -> None:
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
@@ -559,8 +595,8 @@ class RawCutterTab(QWidget):
             QMessageBox.critical(
                 self,
                 "FFmpeg not found",
-                "FFmpeg was not found. Install FFmpeg or place ffmpeg.exe in "
-                "tools\\ffmpeg\\ffmpeg.exe.",
+                "FFmpeg was not found. Run ./setup_ffmpeg.sh or place the "
+                "Linux ffmpeg binary in tools/ffmpeg/ffmpeg.",
             )
             return
 
@@ -597,11 +633,15 @@ class RawCutterTab(QWidget):
                 return
 
         crop = self.video_surface.crop_rect_source()
+        partial_path = output_path.with_name(
+            f".{output_path.stem}.partial-{uuid4().hex[:8]}"
+            f"{output_path.suffix}"
+        )
 
         try:
             arguments = build_export_arguments(
                 self._current_video_path,
-                output_path,
+                partial_path,
                 start_ms,
                 end_ms,
                 crop,
@@ -627,6 +667,7 @@ class RawCutterTab(QWidget):
                 success,
                 message,
                 output_path,
+                partial_path,
             )
         )
         self._export_job.start()
@@ -640,12 +681,29 @@ class RawCutterTab(QWidget):
         success: bool,
         message: str,
         output_path: Path,
+        partial_path: Path,
     ) -> None:
         self._export_job = None
         self.cancel_export_button.setEnabled(False)
         self._update_export_enabled()
 
         if success:
+            try:
+                partial_path.replace(output_path)
+            except OSError as exc:
+                try:
+                    if partial_path.exists():
+                        partial_path.unlink()
+                except OSError:
+                    pass
+                self.status_label.setText("Could not finalize export.")
+                QMessageBox.critical(
+                    self,
+                    "Export failed",
+                    f"Video rendered but could not replace the final file:\n{exc}",
+                )
+                return
+
             self.status_label.setText(f"Export completed: {output_path}")
             QMessageBox.information(
                 self,
@@ -654,8 +712,8 @@ class RawCutterTab(QWidget):
             )
         else:
             try:
-                if output_path.exists():
-                    output_path.unlink()
+                if partial_path.exists():
+                    partial_path.unlink()
             except OSError:
                 pass
             self.status_label.setText(message.splitlines()[0])
@@ -767,4 +825,6 @@ class RawCutterTab(QWidget):
         if error == QMediaPlayer.Error.NoError:
             return
         message = error_string or self.player.errorString() or "Unknown media error"
-        self.status_label.setText(f"Playback error: {message}")
+        self.status_label.setText(
+            f"Playback error: {message}. FFprobe-based crop/export may still work."
+        )
