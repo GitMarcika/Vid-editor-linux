@@ -1,6 +1,8 @@
 import logging
+import os
 import sys
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from src.gui.main_window import MainWindow
@@ -36,6 +38,9 @@ def run() -> int:
     logger.info("Starting Vid Editor")
     window = MainWindow()
     window.show()
+
+    if os.environ.get("VIDEDITOR_SMOKE_TEST", "").strip() == "1":
+        QTimer.singleShot(750, app.quit)
 
     exit_code = app.exec()
     logger.info("Vid Editor exited with code %s", exit_code)
