@@ -11,3 +11,4 @@ user_data/
 tools/ffmpeg/ffmpeg
 tools/ffmpeg/ffprobe
 tools/ffmpeg/*.tar.xz
+.build-venv/
