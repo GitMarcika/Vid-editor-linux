@@ -3,8 +3,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+import sys
 
-from src.utils.app_paths import settings_file_path, user_data_dir
+from src.utils.app_paths import application_base_dir, settings_file_path, user_data_dir
 
 
 class AppPathTests(unittest.TestCase):
@@ -18,6 +19,36 @@ class AppPathTests(unittest.TestCase):
                 self.assertEqual(
                     user_data_dir(),
                     Path(tmp) / "VidEditor",
+                )
+
+    def test_frozen_application_base_is_executable_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            executable = Path(tmp) / "VidEditor"
+            with patch.object(sys, "frozen", True, create=True), patch.object(
+                sys,
+                "executable",
+                str(executable),
+            ):
+                self.assertEqual(
+                    application_base_dir(),
+                    Path(tmp).resolve(),
+                )
+
+    def test_portable_env_uses_application_local_user_data(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            executable = Path(tmp) / "VidEditor"
+            with patch.object(sys, "frozen", True, create=True), patch.object(
+                sys,
+                "executable",
+                str(executable),
+            ), patch.dict(
+                os.environ,
+                {"VIDEDITOR_PORTABLE": "1"},
+                clear=False,
+            ):
+                self.assertEqual(
+                    user_data_dir(),
+                    Path(tmp).resolve() / "user_data",
                 )
 
     def test_settings_override(self) -> None:
