@@ -357,15 +357,6 @@ class X11RecordingJob(QObject):
         self.statusChanged.emit("Starting X11 screen recording...")
         self.process.start()
 
-    def _on_start_error(self, error: QProcess.ProcessError) -> None:
-        if error != QProcess.FailedToStart:
-            return
-        self._cleanup_files()
-        self._emit_finished_once(
-            False,
-            "gdbus could not be started for GNOME Wayland capture.",
-        )
-
     def stop(self) -> None:
         if self.process.state() == QProcess.NotRunning:
             return
@@ -516,6 +507,15 @@ class GnomeWaylandRecordingJob(QObject):
         self._process.errorOccurred.connect(self._on_start_error)
         self._process.finished.connect(self._on_start_finished)
         self._process.start()
+
+    def _on_start_error(self, error: QProcess.ProcessError) -> None:
+        if error != QProcess.FailedToStart:
+            return
+        self._cleanup_files()
+        self._emit_finished_once(
+            False,
+            "gdbus could not be started for GNOME Wayland capture.",
+        )
 
     def stop(self) -> None:
         self._stop_requested = True
