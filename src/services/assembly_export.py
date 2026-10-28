@@ -373,18 +373,22 @@ class AssemblyExportJob(QObject):
         self._finished_emitted = False
         self._stderr_tail = ""
 
-        (
-            arguments,
-            self._expected_duration_ms,
-            self.output_width,
-            self.output_height,
-            self.output_fps,
-        ) = build_assembly_export_arguments(
-            clips,
-            overlays,
-            self._output_path,
-            self._work_dir,
-        )
+        try:
+            (
+                arguments,
+                self._expected_duration_ms,
+                self.output_width,
+                self.output_height,
+                self.output_fps,
+            ) = build_assembly_export_arguments(
+                clips,
+                overlays,
+                self._output_path,
+                self._work_dir,
+            )
+        except Exception:
+            shutil.rmtree(self._work_dir, ignore_errors=True)
+            raise
 
         self.process = QProcess(self)
         self.process.setProgram(ffmpeg_path)
