@@ -22,6 +22,20 @@ else
 fi
 
 echo
+echo "Qt desktop shared libraries:"
+if command -v ldconfig >/dev/null 2>&1; then
+    for lib in libEGL.so.1 libpulse.so.0 libX11.so.6; do
+        if ldconfig -p 2>/dev/null | grep -Fq "$lib"; then
+            echo "  $lib: found"
+        else
+            echo "  $lib: NOT FOUND"
+        fi
+    done
+else
+    echo "  ldconfig is not available for library discovery"
+fi
+
+echo
 echo "Python candidates:"
 found=0
 for candidate in python3.9 python3.10 python3.11 python3; do
