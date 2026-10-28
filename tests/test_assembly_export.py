@@ -93,6 +93,25 @@ class AssemblyExportTests(unittest.TestCase):
         self.assertIn("[vcat]null[vout]", graph)
         self.assertNotIn("ass=", graph)
 
+    def test_non_mp4_assembly_does_not_force_faststart(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source.mp4"
+            source.write_bytes(b"x")
+
+            with patch(
+                "src.services.assembly_export.probe_video_info",
+                return_value=VideoInfo(640, 360, 30.0, False),
+            ):
+                args, *_ = build_assembly_export_arguments(
+                    [{"path": str(source), "duration_ms": 1000}],
+                    [],
+                    root / "out.mkv",
+                    root / "work",
+                )
+
+            self.assertNotIn("+faststart", args)
+
     def test_build_arguments_uses_first_clip_canvas(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
