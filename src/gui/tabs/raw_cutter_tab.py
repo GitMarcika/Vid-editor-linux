@@ -307,13 +307,13 @@ class RawCutterTab(QWidget):
                     int(crop.get("height", self.crop_height.value())),
                 )
                 self._pending_crop = None
+
+            if info.duration_ms > 0:
+                self._on_duration_changed(info.duration_ms)
         except (OSError, RuntimeError, ValueError) as exc:
             self.status_label.setText(
                 f"FFprobe video metadata unavailable: {exc}"
             )
-
-            if info.duration_ms > 0:
-                self._on_duration_changed(info.duration_ms)
 
     def _toggle_playback(self) -> None:
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
