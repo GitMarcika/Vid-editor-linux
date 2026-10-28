@@ -126,8 +126,6 @@ def build_x11grab_arguments(
         "18",
         "-pix_fmt",
         "yuv420p",
-        "-movflags",
-        "+faststart",
         "-nostats",
         str(output_path),
     ]
@@ -371,8 +369,11 @@ class X11RecordingJob(QObject):
         self.process.write(b"q\n")
         self.process.waitForBytesWritten(100)
         self.process.closeWriteChannel()
-        QTimer.singleShot(3000, self._terminate_if_running)
-        QTimer.singleShot(5000, self._kill_if_running)
+        # Give FFmpeg plenty of time to flush the MP4 trailer cleanly.
+        # Enterprise/VNC workstations and slow output filesystems can need
+        # more than a few seconds after receiving the interactive 'q'.
+        QTimer.singleShot(60000, self._terminate_if_running)
+        QTimer.singleShot(90000, self._kill_if_running)
 
     def _terminate_if_running(self) -> None:
         if self.process.state() != QProcess.NotRunning:
