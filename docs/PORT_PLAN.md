@@ -63,9 +63,19 @@ Acceptance is defined in `docs/ASSEMBLY_RHEL8.md`.
 
 Acceptance is defined in `docs/SCREEN_RECORDER_RHEL8.md`.
 
-## Step 5 - No-sudo deployment
+## Step 5 - No-sudo deployment — IMPLEMENTED, awaiting real RHEL8 validation
 
-Provide the target-machine user-space runtime/package. No writes to system directories.
+- PyInstaller one-folder package built with Python 3.9
+- build runs inside Rocky Linux 8 to preserve the RHEL8/glibc 2.28 compatibility floor
+- package contains Python runtime, PySide6/Qt application runtime and application code
+- package contains pinned application-local FFmpeg/FFprobe
+- no Python, pip, venv or FFmpeg installation required on the target machine
+- no sudo/root requirement on the target machine
+- portable.flag forces settings/logs into the package-local user_data directory
+- package includes run.sh, read-only preflight.sh, BUILD_INFO.txt and third-party notices
+- CI creates VidEditor-rhel8-x86_64.tar.gz plus SHA256 and smoke-starts the frozen GUI under Rocky 8/Xvfb
+
+Acceptance is defined in `docs/PORTABLE_RHEL8.md`.
 
 ## Step 6 - RHEL8 acceptance and hardening
 
